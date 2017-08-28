@@ -772,3 +772,7 @@ if (isset($_SERVER['DEVDESKTOP_DRUPAL_SETTINGS_DIR']) && file_exists($_SERVER['D
 }
 // </DDSETTINGS>
 $settings['install_profile'] = 'standard';
+
+if (file_exists('/var/www/site-php')) {
+  require '/var/www/site-php/eemzomorodian/eemzomorodian-settings.inc';
+}
