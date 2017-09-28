@@ -3,9 +3,7 @@
 namespace Unish;
 
 /**
- * Tests the drush batch subsystem.
- *
- * @see includes/batch.inc
+ * Tests the Drush Batch subsystem.
  *
  * @group base
  */
@@ -17,7 +15,7 @@ class batchCase extends CommandUnishTestCase {
       'root' => $this->webroot(),
       'uri' => key($sites),
       'yes' => NULL,
-      'include' => dirname(__FILE__),
+      'include' => __DIR__,
     );
     $this->drush('unit-batch', array(), $options);
     // Collect log messages that begin with "!!!" (@see: _drush_unit_batch_operation())

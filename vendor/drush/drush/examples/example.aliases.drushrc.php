@@ -122,7 +122,7 @@
  *
  *   $ drush site-alias @self
  *
- * TIP:  If you would like to have drush include a 'databases' record
+ * TIP:  If you would like to have Drush include a 'databases' record
  * in the output, include the options --with-db and --show-passwords:
  *
  *   $ drush site-alias @self --with-db --show-passwords
@@ -186,12 +186,8 @@
  * Although most aliases will contain only a few options, a number
  * of settings that are commonly used appear below:
  *
- * - 'uri': In Drupal 7 and 8, the value of --uri should always be the same as
+ * - 'uri': The value of --uri should always be the same as
  *   when the site is being accessed from a web browser (e.g. http://example.com)
- *   In Drupal 6, the value of --uri should always be the same as the site's folder
- *   name in the 'sites' folder (e.g. default); it is best if the site folder name
- *   matches the URI from the browser, and is consistent on every instance of the
- *   same site (e.g. also use sites/example.com for http://example.com).
  * - 'root': The Drupal root; must not be specified as a relative path.
  * - 'remote-host': The fully-qualified domain name of the remote system
  *   hosting the Drupal instance. **Important Note: The remote-host option
@@ -223,12 +219,9 @@
  *     specified.
  *   - '%root': A reference to the Drupal root defined in the 'root' item in the
  *     site alias record.
- * - 'php': path to custom php interpreter. Windows support limited to Cygwin.
+ * - 'php': path to custom php interpreter.
  * - 'php-options': commandline options for php interpreter, you may
  *   want to set this to '-d error_reporting="E_ALL^E_DEPRECATED"'
- * - 'variables' : An array of name/value pairs which override Drupal
- *   variables/config. These values take precedence even over settings.php
- *   overrides.
  * - 'command-specific': These options will only be set if the alias
  *   is used with the specified command.  In the example below, the option
  *   `--no-dump` will be selected whenever the @stage alias
@@ -236,24 +229,12 @@
  *   - `drush @stage sql-sync @self @live`
  *   - `drush sql-sync @stage @live`
  *   - `drush sql-sync @live @stage`
- *   In case of conflicting options, command-specific options in targets
- *   (source and destination) take precedence over command-specific options
- *   in the bootstrapped site, and command-specific options in a destination
- *   alias will take precedence over those in a source alias.
- * - 'source-command-specific' and 'target-command-specific': Behaves exactly
- *   like the 'command-specific' option, but is applied only if the alias
- *   is used as the source or target, respectively, of an rsync or sql-sync
- *   command.  In the example below, `--skip-tables-list=comments` whenever
- *   the alias @live is the target of an sql-sync command, but comments will
- *   be included if @live is the source for the sql-sync command.
  * - '#peer': Settings that begin with a '#' are not used directly by Drush, and
  *   in fact are removed before making a backend invoke call (for example).
  *   These kinds of values are useful in conjunction with shell aliases.  See
  *   `drush topic docs-shell-aliases` for more information on this.
  * - '#env-vars': An associative array of keys and values that should be set on
  *    the remote side before invoking drush.
- * - rsync command options have specific requirements in order to
- *   be passed through by Drush. See the comments on the sample below:
  *
  * @code
  * 'command-specific' => array (
@@ -268,14 +249,11 @@
  *     // will not work).
  *     'delete' => TRUE,
  *
- *     // if you need multiple excludes, use an rsync exclude file
- *     'exclude-from' => "'/etc/rsync/exclude.rules'",
- *
  *     // filter options with white space must be wrapped in "" to preserve
  *     // the inner ''.
  *     'filter' => "'exclude *.sql'",
  *
- *     // if you need multple filter options, see rsync merge-file options
+ *     // if you need multiple filter options, see rsync merge-file options
  *     'filter' => "'merge /etc/rsync/default.rules'",
  *   ),
  * ),
@@ -320,9 +298,6 @@
 #      '%files' => 'sites/mydrupalsite.com/files',
 #      '%custom' => '/my/custom/path',
 #     ),
-#     'variables' => array(
-#        'site_name' => 'My Drupal site',
-#      ),
 #     'command-specific' => array (
 #       'sql-sync' => array (
 #         'no-dump' => TRUE,
@@ -337,9 +312,6 @@
 #$aliases['dev'] = array(
 #    'uri' => 'http://dev.example.com',
 #    'root' => '/path/to/drupal/root',
-#    'variables' => array(
-#      'mail_system' => array('default-system' => 'DevelMailLog'),
-#    ),
 #  );
 #$aliases['server'] = array(
 #    'remote-host' => 'mystagingserver.myisp.com',

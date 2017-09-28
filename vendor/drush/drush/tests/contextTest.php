@@ -18,17 +18,15 @@ class contextCase extends CommandUnishTestCase {
     $this->log("webroot: " . $this->webroot() . "\n", 'warning');
     $this->env = key($this->getSites());
     $this->site = $this->webroot() . '/sites/' . $this->env;
-    $this->home = UNISH_SANDBOX . '/home';
+    $this->home = self::getSandbox() . '/home';
     $this->paths = array(
-      'custom' => UNISH_SANDBOX,
+      'custom' => self::getSandbox(),
       'site' =>  $this->site,
-      'drupal' => $this->webroot() . '/sites/all/drush',
+      'drupal' => $this->webroot() . '/drush',
       'drupal-parent' => dirname($this->webroot()) . '/drush',
       'user' => $this->home,
       'home.drush' => $this->home . '/.drush',
-      'system' => UNISH_SANDBOX . '/etc/drush',
-      // We don't want to write a file into drush dir since it is not in the sandbox.
-      // 'drush' => dirname(realpath(UNISH_DRUSH)),
+      'system' => self::getSandbox() . '/etc/drush',
     );
     // Run each path through realpath() since the paths we'll compare against
     // will have already run through drush_load_config_file().
@@ -82,9 +80,24 @@ EOD;
    * Assure that all possible config files get loaded.
    */
   function testConfigSearchPaths() {
+    // First test `drush status --format=json --fields=drush-conf
+    $options = array(
+      'format' => 'json',
+      'fields' => 'drush-conf',
+      'config' => self::getSandbox(),
+      'root' => $this->webroot(),
+      'uri' => key($this->getSites())
+    );
+    $this->drush('core-status', array(), $options);
+    $loaded = $this->getOutputFromJSON('drush-conf');
+    $loaded = array_map(array(&$this, 'convert_path'), $loaded);
+    $this->assertSame($this->written, $loaded);
+
+/*
+    // Next test `drush status --pipe 'Drush configuration'`
     $options = array(
       'pipe' => NULL,
-      'config' => UNISH_SANDBOX,
+      'config' => self::getSandbox(),
       'root' => $this->webroot(),
       'uri' => key($this->getSites())
     );
@@ -92,6 +105,7 @@ EOD;
     $loaded = $this->getOutputFromJSON('drush-conf');
     $loaded = array_map(array(&$this, 'convert_path'), $loaded);
     $this->assertSame($this->written, $loaded);
+*/
   }
 
   /**
@@ -100,7 +114,7 @@ EOD;
   function testConfigVersionSpecific() {
     $major = $this->drush_major_version();
     // Arbitrarily choose the system search path.
-    $path = realpath(UNISH_SANDBOX . '/etc/drush');
+    $path = realpath(self::getSandbox() . '/etc/drush');
     $contents = <<<EOD
 <?php
 // Written by Unish. This file is safe to delete.
@@ -118,6 +132,16 @@ EOD;
       file_put_contents($file, $contents);
     }
 
+    $this->drush('core-status', array(), array('format' => 'json', 'fields' => 'drush-conf'));
+    $loaded = $this->getOutputFromJSON('drush-conf');
+    // Next 2 lines needed for Windows compatibility.
+    $loaded = array_map(array(&$this, 'convert_path'), $loaded);
+    $files = array_map(array(&$this, 'convert_path'), $files);
+    $this->assertTrue(in_array($files[0], $loaded), 'Loaded a version-specific config file.');
+    $this->assertFalse(in_array($files[1], $loaded), 'Did not load a mismatched version-specific config file.');
+
+/*
+    // Also try it the old way
     $this->drush('core-status', array('Drush configuration'), array('pipe' => NULL));
     $loaded = $this->getOutputFromJSON('drush-conf');
     // Next 2 lines needed for Windows compatibility.
@@ -125,6 +149,7 @@ EOD;
     $files = array_map(array(&$this, 'convert_path'), $files);
     $this->assertTrue(in_array($files[0], $loaded), 'Loaded a version-specific config file.');
     $this->assertFalse(in_array($files[1], $loaded), 'Did not load a mismatched version-specific config file.');
+*/
   }
 
   /**
@@ -138,9 +163,10 @@ EOD;
     $eval =  '$contextConfig = drush_get_option("contextConfig", "n/a");';
     $eval .= '$cli1 = drush_get_option("cli1");';
     $eval .= 'print json_encode(get_defined_vars());';
-    $config = UNISH_SANDBOX . '/drushrc.php';
+    $config = self::getSandbox() . '/drushrc.php';
     $options = array(
       'cli1' => NULL,
+      'strict' => 0,
       'config' => $config,
       'root' => $this->webroot(),
       'uri' => key($this->getSites()),
@@ -163,6 +189,7 @@ EOD;
     $output = $this->getOutput();
     $actuals = json_decode(trim($output));
     $this->assertEquals('alias1', $actuals->contextConfig);
+    unlink($this->webroot() . '/sites/' . $this->env . '/aliases.drushrc.php');
 
     // Command specific wins over non-specific. If it did not, $expected would
     // be 'site'. Note we call unit-eval command in order not to purturb

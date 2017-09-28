@@ -2,6 +2,8 @@
 
 namespace Unish;
 
+use Webmozart\PathUtil\Path;
+
 /**
  * @group base
  */
@@ -44,23 +46,24 @@ class annotatedCommandCase extends CommandUnishTestCase {
     // Copy the 'woot' module over to the Drupal site we just set up.
     $this->setupModulesForTests($root);
 
-    // These are not good asserts, but for the purposes of isolation....
-    $targetDir = $root . DIRECTORY_SEPARATOR . $this->drupalSitewideDirectory() . '/modules/woot';
-    if (UNISH_DRUPAL_MAJOR_VERSION == 8) {
-        $commandFile = $targetDir . "/src/Commands/WootCommands.php";
-    } else {
-        $commandFile = $targetDir . "/Commands/WootCommands.php";
-    }
-    $this->assertFileExists(dirname(dirname(dirname($commandFile))));
-    $this->assertFileExists(dirname(dirname($commandFile)));
-    $this->assertFileExists(dirname($commandFile));
-    $this->assertFileExists($commandFile);
-
-    // Enable out module. This will also clear the commandfile cache.
+    // Enable our module. This will also clear the commandfile cache.
     $this->drush('pm-enable', array('woot'), $options);
 
     // In theory this is not necessary, but this test keeps failing.
-    $this->drush('cc', array('drush'), $options);
+    // $this->drush('cc', array('drush'), $options);
+
+    // Make sure that modules can supply DCG Generators and they work.
+    $optionsExample['answers'] = json_encode([
+      'name' => 'foo',
+      'machine_name' => 'bar',
+    ]);
+    $optionsExample['directory'] = self::getSandbox();
+    $original = getenv('SHELL_INTERACTIVE');
+    putenv('SHELL_INTERACTIVE=1');
+    $this->drush('generate', ['woot-example'], array_merge($options, $optionsExample));
+    putenv('SHELL_INTERACTIVE=' . $original);
+    $target = Path::join(self::getSandbox(), '/src/Commands/ExampleBarCommands.php');
+    $this->assertStringEqualsFile($target, 'ExampleBarCommands says Woot mightily.');
 
     // drush woot --help
     $this->drush('woot', array(), $options + ['help' => NULL]);
@@ -145,44 +148,39 @@ EOT;
     $this->assertEquals($expected, json_encode($data));
 
     // drush try-formatters --help
-    $this->drush('try-formatters', array(), $options + ['help' => NULL], NULL, NULL, self::EXIT_SUCCESS);
+    $this->drush('try-formatters', array(), $options + ['help' => NULL]);
     $output = $this->getOutput();
     $this->assertContains('Demonstrate formatters', $output);
     $this->assertContains('try:formatters --fields=first,third', $output);
     $this->assertContains('try:formatters --fields=III,II', $output);
-    $this->assertContains('--fields=<first, second, third>', $output);
-    $this->assertContains('Fields to output. All available', $output);
-    $this->assertContains('--format=<table>', $output);
-    $this->assertContains('Select output format. Available:', $output);
+    // $this->assertContains('--fields=<first, second, third>', $output);
+    $this->assertContains('Available fields:', $output);
+    $this->assertContains('[default: "table"]', $output);
     $this->assertContains('Aliases: try-formatters', $output);
 
-    // If we are running Drupal version 8 or later, then also check to
-    // see if the demo:greet and annotated:greet commands are available.
-    if (UNISH_DRUPAL_MAJOR_VERSION >= 8) {
-        $this->drush('demo:greet symfony', array(), $options, NULL, NULL, self::EXIT_SUCCESS);
-        $output = $this->getOutput();
-        $this->assertEquals('Hello symfony', $output);
 
-        $this->drush('annotated:greet symfony', array(), $options, NULL, NULL, self::EXIT_SUCCESS);
-        $output = $this->getOutput();
-        $this->assertEquals('Hello symfony', $output);
-    }
 
-    // Flush the Drush cache so that our 'woot' command is not cached.
-    $this->drush('cache-clear', array('drush'), $options, NULL, NULL, self::EXIT_SUCCESS);
+    $this->drush('demo:greet symfony', array(), $options);
+    $output = $this->getOutput();
+    $this->assertEquals('Hello symfony', $output);
+
+    $this->drush('annotated:greet symfony', array(), $options);
+    $output = $this->getOutput();
+    $this->assertEquals('Hello symfony', $output);
   }
 
   public function setupGlobalExtensionsForTests() {
     $globalExtension = __DIR__ . '/resources/global-includes';
-    $targetDir = UNISH_SANDBOX . DIRECTORY_SEPARATOR . 'global-includes';
+    $targetDir = Path::join(self::getSandbox(), 'global-includes');
     $this->mkdir($targetDir);
     $this->recursive_copy($globalExtension, $targetDir);
     return $targetDir;
   }
 
   public function setupModulesForTests($root) {
-    $wootModule = __DIR__ . '/resources/modules/d' . UNISH_DRUPAL_MAJOR_VERSION . '/woot';
-    $targetDir = $root . DIRECTORY_SEPARATOR . $this->drupalSitewideDirectory() . '/modules/woot';
+    $wootModule = Path::join(__DIR__, '/resources/modules/d8/woot');
+    // We install into Unish so that we aren't cleaned up. That causes container to go invalid after tearDownAfterClass().
+    $targetDir = Path::join($root, 'modules/unish/woot');
     $this->mkdir($targetDir);
     $this->recursive_copy($wootModule, $targetDir);
   }

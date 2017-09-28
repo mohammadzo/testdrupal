@@ -10,6 +10,7 @@
  * @see includes/bootstrap.inc
  */
 
+use Drush\Drush;
 use Drush\Log\LogLevel;
 use Webmozart\PathUtil\Path;
 
@@ -28,7 +29,7 @@ function drush_error_handler($errno, $message, $filename, $line, $context) {
   // drush_errors_on() and drush_errors_off().
   if ($errno & error_reporting()) {
     // By default we log notices.
-    $type = drush_get_option('php-notices', 'notice');
+    $type = drush_get_option('php-notices', LogLevel::INFO);
     $halt_on_error = drush_get_option('halt-on-error', (drush_drupal_major_version() != 6));
 
     // Bitmask value that constitutes an error needing to be logged.
@@ -201,7 +202,7 @@ function drush_site_path($path = NULL) {
   else {
     // Move up dir by dir and check each.
     // Stop if we get to a Drupal root.   We don't care
-    // if it is DRUSH_SELECTED_DRUPAL_ROOT or some other root.
+    // if it is the selected or some other root.
     while (($path = _drush_shift_path_up($path)) && !drush_valid_root($path)) {
       if (file_exists($path . '/settings.php')) {
         $site_path = $path;
@@ -210,7 +211,7 @@ function drush_site_path($path = NULL) {
     }
   }
 
-  $site_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
+  $site_root = Drush::bootstrapManager()->getRoot();
   if (file_exists($site_root . '/sites/sites.php')) {
     $sites = array();
     // This will overwrite $sites with the desired mappings.
@@ -244,7 +245,7 @@ function drush_site_path($path = NULL) {
  */
 function drush_site_dir_lookup_from_hostname($hostname, $site_root = NULL) {
   if (!isset($site_root)) {
-    $site_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
+    $site_root = Drush::bootstrapManager()->getRoot();
   }
   if (!empty($site_root) && file_exists($site_root . '/sites/sites.php')) {
     $sites = array();
@@ -271,7 +272,7 @@ function drush_site_dir_lookup_from_hostname($hostname, $site_root = NULL) {
  * (drushrc.php) stored with the site's drush folders might not be found.
  */
 function drush_conf_path($server_uri, $require_settings = TRUE) {
-  $drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
+  $drupal_root = Drush::bootstrapManager()->getRoot();
   if(empty($drupal_root) || empty($server_uri)) {
     return NULL;
   }
@@ -316,86 +317,17 @@ function drush_conf_path($server_uri, $require_settings = TRUE) {
 }
 
 /**
- * Exhaustive depth-first search to try and locate the Drupal root directory.
- * This makes it possible to run Drush from a subdirectory of the drupal root.
- *
- * @param
- *   Search start path. Defaults to current working directory.
- * @return
- *   A path to drupal root, or FALSE if not found.
- */
-function drush_locate_root($start_path = NULL) {
-  $drupal_root = FALSE;
-
-  $start_path = empty($start_path) ? drush_cwd() : $start_path;
-  foreach (array(TRUE, FALSE) as $follow_symlinks) {
-    $path = $start_path;
-    if ($follow_symlinks && is_link($path)) {
-      $path = realpath($path);
-    }
-    // Check the start path.
-    if (drush_valid_root($path)) {
-      $drupal_root = $path;
-      break;
-    }
-    else {
-      // Move up dir by dir and check each.
-      while ($path = _drush_shift_path_up($path)) {
-        if ($follow_symlinks && is_link($path)) {
-          $path = realpath($path);
-        }
-        if (drush_valid_root($path)) {
-          $drupal_root = $path;
-          break 2;
-        }
-      }
-    }
-  }
-
-  return $drupal_root;
-}
-
-/**
  * Checks whether given path qualifies as a Drupal root.
  *
  * @param string
  *   Path to check.
  *
- * @return string
- *   The relative path to common.inc (varies by Drupal version), or FALSE if not
- *   a Drupal root.
- */
-function drush_valid_root($path) {
-  $bootstrap_class = drush_bootstrap_class_for_root($path);
-  return $bootstrap_class != NULL;
-}
-
-/**
- * Tests the currently loaded database credentials to ensure a database connection can be made.
- *
- * @param bool $log_errors
- *   (optional) If TRUE, log error conditions; otherwise be quiet.
- *
  * @return bool
- *   TRUE if database credentials are valid.
+ *   True if the provided path is a valid Drupal root.
  */
-function drush_valid_db_credentials() {
-  try {
-    $sql = drush_sql_get_class();
-    if (!$sqlVersion = drush_sql_get_version()) {
-      drush_log(dt('While checking DB credentials, could not instantiate SQLVersion class.'), 'debug');
-      return FALSE;
-    }
-    if (!$sqlVersion->valid_credentials($sql->db_spec())) {
-      drush_log(dt('DB credentials are invalid.'), 'debug');
-      return FALSE;
-    }
-    return $sql->query('SELECT 1;');
-  }
-  catch (Exception $e) {
-    drush_log(dt('Checking DB credentials yielded error: @e', array('@e' => $e->getMessage())), 'debug');
-    return FALSE;
-  }
+function drush_valid_root($root) {
+  $bootstrap_class = Drush::bootstrapManager()->bootstrapObjectForRoot($root);
+  return $bootstrap_class != NULL;
 }
 
 /**
@@ -421,8 +353,8 @@ function drush_valid_db_credentials() {
  * @see DRUSH_COMMAND
  */
 function drush_find_drush() {
-  if ($drush = realpath($_SERVER['argv']['0'])) {
-    return Path::canonicalize($drush);
+  if ($drush = $_SERVER['argv']['0']) {
+    return Path::makeAbsolute($drush, drush_cwd());
   }
   return FALSE;
 }
@@ -604,15 +536,6 @@ function _drush_test_os($os, $os_list_to_check) {
 }
 
 /**
- * Read the drush info file.
- */
-function drush_read_drush_info() {
-  $drush_info_file = dirname(__FILE__) . '/../drush.info';
-
-  return parse_ini_file($drush_info_file);
-}
-
-/**
  * Make a determination whether or not the given
  * host is local or not.
  *
@@ -702,155 +625,29 @@ function drush_directory_cache($subdir = '') {
     array('@locations' => implode(',', array_keys($cache_locations)))));
 }
 
-/**
- * Get complete information for all available extensions (modules and themes).
- *
- * @return
- *   An array containing info for all available extensions. In D8, these are Extension objects.
- */
-function drush_get_extensions($include_hidden = TRUE) {
-  drush_include_engine('drupal', 'environment');
-  $extensions = array_merge(drush_get_modules($include_hidden), drush_get_themes($include_hidden));
-  foreach ($extensions as $name => $extension) {
-    if (isset($extension->info['name'])) {
-      $extensions[$name]->label = $extension->info['name'].' ('.$name.')';
-    }
-    else {
-      drush_log(dt("Extension !name provides no human-readable name in .info file.", array('!name' => $name), LogLevel::DEBUG));
-      $extensions[$name]->label = $name.' ('.$name.')';
-    }
-    if (empty($extension->info['package'])) {
-      $extensions[$name]->info['package'] = dt('Other');
-    }
-  }
-  return $extensions;
-}
-
-/**
- * Gets the extension name.
- *
- * @param $info
- *   The extension info.
- * @return string
- *   The extension name.
- */
-function drush_extension_get_name($info) {
-  drush_include_engine('drupal', 'environment');
-  return _drush_extension_get_name($info);
-}
-
-/**
- * Gets the extension type.
- *
- * @param $info
- *   The extension info.
- * @return string
- *   The extension type.
- */
-function drush_extension_get_type($info) {
-  drush_include_engine('drupal', 'environment');
-  return _drush_extension_get_type($info);
-}
-
-/**
- * Gets the extension path.
- *
- * @param $info
- *   The extension info.
- * @return string
- *   The extension path.
- */
-function drush_extension_get_path($info) {
-  drush_include_engine('drupal', 'environment');
-  return _drush_extension_get_path($info);
-}
-
-/**
- * Test compatibility of a extension with version of drupal core and php.
- *
- * @param $file Extension object as returned by system_rebuild_module_data().
- * @return FALSE if the extension is compatible.
- */
-function drush_extension_check_incompatibility($file) {
-  if (!isset($file->info['core']) || $file->info['core'] != drush_get_drupal_core_compatibility()) {
-    return 'Drupal';
-  }
-  if (version_compare(phpversion(), $file->info['php']) < 0) {
-    return 'PHP';
-  }
-  return FALSE;
-}
-
-/**
- *
- */
-function drush_drupal_required_modules($modules) {
-  drush_include_engine('drupal', 'environment');
-  return _drush_drupal_required_modules($modules);
-}
-
-/**
- * Return the default theme.
- *
- * @return
- *  Machine name of the default theme.
- */
-function drush_theme_get_default() {
-  drush_include_engine('drupal', 'environment');
-  return _drush_theme_default();
-}
-
-/**
- * Return the administration theme.
- *
- * @return
- *  Machine name of the administration theme.
- */
-function drush_theme_get_admin() {
-  drush_include_engine('drupal', 'environment');
-  return _drush_theme_admin();
-}
-
-/**
- * Return the path to public files directory.
- */
-function drush_file_get_public() {
-  drush_include_engine('drupal', 'environment');
-  return _drush_file_public_path();
-}
-
-/**
- * Return the path to private files directory.
- */
-function drush_file_get_private() {
-  drush_include_engine('drupal', 'environment');
-  return _drush_file_private_path();
-}
-
-/**
- * Returns the sitewide Drupal directory for extensions.
- */
-function drush_drupal_sitewide_directory($major_version = NULL) {
-  if (!$major_version) {
-    $major_version = drush_drupal_major_version();
-  }
-  return ($major_version < 8) ? 'sites/all' : '';
-}
-
-/**
- * Helper function to get core compatibility constant.
- *
- * @return string
- *   The Drupal core compatibility constant.
- */
-function drush_get_drupal_core_compatibility() {
-  if (defined('DRUPAL_CORE_COMPATIBILITY')) {
-    return DRUPAL_CORE_COMPATIBILITY;
-  }
-  elseif (defined('\Drupal::CORE_COMPATIBILITY')) {
-    return \Drupal::CORE_COMPATIBILITY;
-  }
-}
+///**
+// * Get complete information for all available extensions (modules and themes).
+// *
+// * @return
+// *   An array containing info for all available extensions. In D8, these are Extension objects.
+// */
+//function drush_get_extensions($include_hidden = TRUE) {
+//  drush_include_engine('drupal', 'environment');
+//  $extensions = array_merge(drush_get_modules($include_hidden), drush_get_themes($include_hidden));
+//  foreach ($extensions as $name => $extension) {
+//    if (isset($extension->info['name'])) {
+//      $extensions[$name]->label = $extension->info['name'].' ('.$name.')';
+//    }
+//    else {
+//      drush_log(dt("Extension !name provides no human-readable name in .info file.", array('!name' => $name), LogLevel::DEBUG));
+//      $extensions[$name]->label = $name.' ('.$name.')';
+//    }
+//    if (empty($extension->info['package'])) {
+//      $extensions[$name]->info['package'] = dt('Other');
+//    }
+//  }
+//  return $extensions;
+//}
 
 /**
  * Set Env. Variables for given site-alias.
@@ -865,4 +662,78 @@ function drush_set_environment_vars(array $site_record) {
       }
     }
   }
+}
+
+/**
+ * Determine whether current OS is a Windows variant.
+ */
+function drush_is_windows($os = NULL) {
+  return strtoupper(substr($os ?: PHP_OS, 0, 3)) === 'WIN';
+}
+
+function drush_escapeshellarg($arg, $os = NULL, $raw = FALSE) {
+  // Short-circuit escaping for simple params (keep stuff readable)
+  if (preg_match('|^[a-zA-Z0-9.:/_-]*$|', $arg)) {
+    return $arg;
+  }
+  elseif (drush_is_windows($os)) {
+    return _drush_escapeshellarg_windows($arg, $raw);
+  }
+  else {
+    return _drush_escapeshellarg_linux($arg, $raw);
+  }
+}
+
+/**
+ * Linux version of escapeshellarg().
+ *
+ * This is intended to work the same way that escapeshellarg() does on
+ * Linux.  If we need to escape a string that will be used remotely on
+ * a Linux system, then we need our own implementation of escapeshellarg,
+ * because the Windows version behaves differently.
+ */
+function _drush_escapeshellarg_linux($arg, $raw = FALSE) {
+  // For single quotes existing in the string, we will "exit"
+  // single-quote mode, add a \' and then "re-enter"
+  // single-quote mode.  The result of this is that
+  // 'quote' becomes '\''quote'\''
+  $arg = preg_replace('/\'/', '\'\\\'\'', $arg);
+
+  // Replace "\t", "\n", "\r", "\0", "\x0B" with a whitespace.
+  // Note that this replacement makes Drush's escapeshellarg work differently
+  // than the built-in escapeshellarg in PHP on Linux, as these characters
+  // usually are NOT replaced. However, this was done deliberately to be more
+  // conservative when running _drush_escapeshellarg_linux on Windows
+  // (this can happen when generating a command to run on a remote Linux server.)
+  $arg = str_replace(array("\t", "\n", "\r", "\0", "\x0B"), ' ', $arg);
+
+  // Only wrap with quotes when needed.
+  if(!$raw) {
+    // Add surrounding quotes.
+    $arg = "'" . $arg . "'";
+  }
+
+  return $arg;
+}
+
+/**
+ * Windows version of escapeshellarg().
+ */
+function _drush_escapeshellarg_windows($arg, $raw = FALSE) {
+  // Double up existing backslashes
+  $arg = preg_replace('/\\\/', '\\\\\\\\', $arg);
+
+  // Double up double quotes
+  $arg = preg_replace('/"/', '""', $arg);
+
+  // Double up percents.
+  // $arg = preg_replace('/%/', '%%', $arg);
+
+  // Only wrap with quotes when needed.
+  if(!$raw) {
+    // Add surrounding quotes.
+    $arg = '"' . $arg . '"';
+  }
+
+  return $arg;
 }

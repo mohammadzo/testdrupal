@@ -1,5 +1,6 @@
 <?php
 
+use Drush\Drush;
 use Drush\Log\LogLevel;
 
 /**
@@ -26,12 +27,6 @@ define('DRUSH_BOOTSTRAP_MAX', -2);
  * Commands may alternatively use DRUSH_BOOTSTRAP_NONE.
  */
 define('DRUSH_BOOTSTRAP_DRUSH', 0);
-
-// TODO: Move all of the constants below to a Drupal-specific file.
-// We can't do this until commands are declaring which CMS they work
-// with, because right now, commands that do not declare a 'bootstrap'
-// level default to DRUSH_BOOTSTRAP_DRUPAL_LOGIN, so we need this constant,
-// at least, available in non-Drupal contexts.
 
 /**
  * Set up and test for a valid drupal root, either through the -r/--root options,
@@ -91,156 +86,7 @@ define('DRUSH_BOOTSTRAP_DRUPAL_DATABASE', 4);
  */
 define('DRUSH_BOOTSTRAP_DRUPAL_FULL', 5);
 
-/**
- * Log in to the initialiased Drupal site.
- *
- * This is the default bootstrap phase all commands will try to reach,
- * unless otherwise specified.
- *
- * This bootstrap phase is used after the site has been
- * fully bootstrapped.
- *
- * This phase will log you in to the drupal site with the username
- * or user ID specified by the --user/ -u option.
- *
- * Use this bootstrap phase for your command if you need to have access
- * to information for a specific user, such as listing nodes that might
- * be different based on who is logged in.
- */
-define('DRUSH_BOOTSTRAP_DRUPAL_LOGIN', 6);
 
-/**
- * Return the list of bootstrap objects that are available for
- * initializing a CMS with Drush.  We insure that any given candidate
- * class is instantiated only once.
- *
- * @return \Drush\Boot\Boot[]
- */
-function drush_get_bootstrap_candidates() {
-  $candidate_classes = drush_get_bootstrap_candidate_classnames();
-
-  $cache =& drush_get_context('DRUSH_BOOTSTRAP_CANDIDATE_OBJECTS');
-
-  $result = array();
-  foreach($candidate_classes as $candidate_class) {
-    if (array_key_exists($candidate_class, $cache)) {
-      $result[$candidate_class] = $cache[$candidate_class];
-    }
-    else {
-      $result[$candidate_class] = new $candidate_class;
-    }
-  }
-
-  $cache = $result;
-  return $result;
-}
-
-/**
- * Find the list of bootstrap classnames available for initializing a
- * CMS with Drush.
- *
- * @return array
- */
-function drush_get_bootstrap_candidate_classnames() {
-  // Give all commandfiles a chance to return candidates.  They should
-  // return STRINGS with the class name of the bootstrap object they provide.
-  $candidates = drush_command_invoke_all('bootstrap_candidates');
-  // If a bootstrap class was specified on the command line, consider it first.
-  $bootstrap_class = drush_get_option('bootstrap_class', FALSE);
-  if ($bootstrap_class) {
-    array_unshift($candidates, $bootstrap_class);
-  }
-  // Add candidate bootstrap classes for Drupal
-  foreach (array('8', '7', '6') as $version) {
-    $drupal_bootstrap_class = 'Drush\Boot\DrupalBoot' . $version;
-    $candidates[] = $drupal_bootstrap_class;
-  }
-  // Always consider our default bootstrap class last.
-  $candidates[] = 'Drush\Boot\EmptyBoot';
-
-  return $candidates;
-}
-
-/**
- * Look up the best bootstrap class for the given location
- * from the set of available candidates.
- */
-function drush_bootstrap_class_for_root($path) {
-  drush_load_bootstrap_commandfile_at_path($path);
-  $candidates = drush_get_bootstrap_candidates();
-  foreach ($candidates as $candidate) {
-    if ($candidate->valid_root($path)) {
-      return $candidate;
-    }
-  }
-  return NULL;
-}
-
-/**
- * Check to see if there is a bootstrap class available
- * at the specified location; if there is, load it.
- */
-function drush_load_bootstrap_commandfile_at_path($path) {
-  static $paths = array();
-
-  if (!empty($path) && (!array_key_exists($path, $paths))) {
-    $paths[$path] = TRUE;
-    // Check to see if we have any bootstrap classes in this location.
-    $bootstrap_class_dir = $path . '/drush/bootstrap';
-    if (is_dir($bootstrap_class_dir)) {
-      _drush_add_commandfiles(array($bootstrap_class_dir), DRUSH_BOOTSTRAP_NONE);
-    }
-  }
-}
-
-/**
- * Select the bootstrap class to use.  If this is called multiple
- * times, the bootstrap class returned might change on subsequent
- * calls, if the root directory changes.  Once the bootstrap object
- * starts changing the state of the system, however, it will
- * be 'latched', and further calls to drush_select_bootstrap_class()
- * will always return the same object.
- */
-function drush_select_bootstrap_class() {
-  $root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
-
-  // Once we have selected a Drupal root, we will reduce our bootstrap
-  // candidates down to just the one used to select this site root.
-  $bootstrap = drush_bootstrap_class_for_root($root);
-  // If we have not found a bootstrap class by this point,
-  // then take the last one and use it.  This should be our
-  // default bootstrap class.  The default bootstrap class
-  // should pass through all calls without doing anything that
-  // changes state in a CMS-specific way.
-  if ($bootstrap == NULL) {
-    $candidates = drush_get_bootstrap_candidates();
-    $bootstrap = array_pop($candidates);
-  }
-
-  return $bootstrap;
-}
-
-/**
- * Don't allow the bootstrap object to change once we start bootstrapping
- */
-function drush_latch_bootstrap_object($bootstrap) {
-  drush_set_context('DRUSH_BOOTSTRAP_OBJECT', $bootstrap);
-}
-
-/**
- * Get the appropriate bootstrap object.  We'll search for a new
- * bootstrap object every time someone asks for one until we start
- * bootstrapping; then we'll returned the same cached one every time.
- *
- * @return \Drush\Boot\Boot
- */
-function drush_get_bootstrap_object() {
-  $bootstrap = drush_get_context('DRUSH_BOOTSTRAP_OBJECT', FALSE);
-  if (!$bootstrap) {
-    $bootstrap = drush_select_bootstrap_class();
-  }
-  return $bootstrap;
-}
 
 /**
  * Find the URI that has been selected by the cwd
@@ -250,6 +96,9 @@ function _drush_bootstrap_selected_uri() {
   $uri = drush_get_context('DRUSH_SELECTED_URI');
   if (empty($uri)) {
     $site_path = drush_site_path();
+    if ($site_path) {
+      $site_path = _drush_convert_path($site_path);
+    }
     $elements = explode('/', $site_path);
     $current = array_pop($elements);
     if (!$current) {
@@ -290,18 +139,10 @@ function drush_bootstrap_value($context, $value = null) {
  *
  * @return array
  *
- * @see \Drush\Boot\Boot::bootstrap_phases()
+ * @see \Drush\Boot\Boot::bootstrapPhases()
  */
 function _drush_bootstrap_phases($function_names = FALSE) {
-  $result = array();
-
-  if ($bootstrap = drush_get_bootstrap_object()) {
-    $result = $bootstrap->bootstrap_phases();
-    if (!$function_names) {
-      $result = array_keys($result);
-    }
-  }
-  return $result;
+  return Drush::bootstrapManager()->bootstrapPhases($phase, $phase_max);
 }
 
 /**
@@ -321,54 +162,10 @@ function _drush_bootstrap_phases($function_names = FALSE) {
  * @return bool
  *   TRUE if the specified bootstrap phase has completed.
  *
- * @see \Drush\Boot\Boot::bootstrap_phases()
+ * @see \Drush\Boot\Boot::bootstrapPhases()
  */
 function drush_bootstrap($phase, $phase_max = FALSE) {
-  $bootstrap = drush_get_bootstrap_object();
-  $phases = _drush_bootstrap_phases(TRUE);
-  $result = TRUE;
-
-  // If the requested phase does not exist in the list of available
-  // phases, it means that the command requires bootstrap to a certain
-  // level, but no site root could be found.
-  if (!isset($phases[$phase])) {
-    $result = drush_bootstrap_error('DRUSH_NO_SITE', dt("We could not find an applicable site for that command."));
-  }
-
-  // Once we start bootstrapping past the DRUSH_BOOTSTRAP_DRUSH phase, we
-  // will latch the bootstrap object, and prevent it from changing.
-  if ($phase > DRUSH_BOOTSTRAP_DRUSH) {
-    drush_latch_bootstrap_object($bootstrap);
-  }
-
-  drush_set_context('DRUSH_BOOTSTRAPPING', TRUE);
-  foreach ($phases as $phase_index => $current_phase) {
-    $bootstrapped_phase = drush_get_context('DRUSH_BOOTSTRAP_PHASE', -1);
-    if ($phase_index > $phase) {
-      break;
-    }
-    if ($phase_index > $bootstrapped_phase) {
-      if ($result = drush_bootstrap_validate($phase_index)) {
-        if (method_exists($bootstrap, $current_phase) && !drush_get_error()) {
-          drush_log(dt("Drush bootstrap phase : !function()", array('!function' => $current_phase)), LogLevel::BOOTSTRAP);
-          $bootstrap->{$current_phase}();
-
-          // Reset commandfile cache and find any new command files that are available during this bootstrap phase.
-          drush_get_commands(TRUE);
-          _drush_find_commandfiles($phase_index, $phase_max);
-        }
-        drush_set_context('DRUSH_BOOTSTRAP_PHASE', $phase_index);
-      }
-    }
-  }
-  drush_set_context('DRUSH_BOOTSTRAPPING', FALSE);
-  if (!$result || drush_get_error()) {
-    $errors = drush_get_context('DRUSH_BOOTSTRAP_ERRORS', array());
-    foreach ($errors as $code => $message) {
-      drush_set_error($code, $message);
-    }
-  }
-  return !drush_get_error();
+  return Drush::bootstrapManager()->doBootstrap($phase, $phase_max);
 }
 
 /**
@@ -386,9 +183,7 @@ function drush_bootstrap($phase, $phase_max = FALSE) {
  *   TRUE if the specified bootstrap phase has completed.
  */
 function drush_has_boostrapped($phase) {
-  $phase_index = drush_get_context('DRUSH_BOOTSTRAP_PHASE');
-
-  return isset($phase_index) && ($phase_index >= $phase);
+  return Drush::bootstrapManager()->hasBootstrapped($phase);
 }
 
 /**
@@ -408,35 +203,10 @@ function drush_has_boostrapped($phase) {
  * @return bool
  *   TRUE if bootstrap is possible, FALSE if the validation failed.
  *
- * @see \Drush\Boot\Boot::bootstrap_phases()
+ * @see \Drush\Boot\Boot::bootstrapPhases()
  */
 function drush_bootstrap_validate($phase) {
-  $bootstrap = drush_get_bootstrap_object();
-  $phases = _drush_bootstrap_phases(TRUE);
-  static $result_cache = array();
-
-  if (!array_key_exists($phase, $result_cache)) {
-    drush_set_context('DRUSH_BOOTSTRAP_ERRORS', array());
-    drush_set_context('DRUSH_BOOTSTRAP_VALUES', array());
-
-    foreach ($phases as $phase_index => $current_phase) {
-      $validated_phase = drush_get_context('DRUSH_BOOTSTRAP_VALIDATION_PHASE', -1);
-      if ($phase_index > $phase) {
-        break;
-      }
-      if ($phase_index > $validated_phase) {
-        $current_phase .= '_validate';
-        if (method_exists($bootstrap, $current_phase)) {
-          $result_cache[$phase_index] = $bootstrap->{$current_phase}();
-        }
-        else {
-          $result_cache[$phase_index] = TRUE;
-        }
-        drush_set_context('DRUSH_BOOTSTRAP_VALIDATION_PHASE', $phase_index);
-      }
-    }
-  }
-  return $result_cache[$phase];
+  return Drush::bootstrapManager()->bootstrapValidate($phase);
 }
 
 /**
@@ -449,37 +219,7 @@ function drush_bootstrap_validate($phase) {
  *   TRUE if the specified bootstrap phase has completed.
  */
 function drush_bootstrap_to_phase($max_phase_index) {
-  if ($max_phase_index == DRUSH_BOOTSTRAP_MAX) {
-    // Bootstrap as far as we can without throwing an error, but log for
-    // debugging purposes.
-    drush_log(dt("Trying to bootstrap as far as we can."), 'debug');
-    drush_bootstrap_max();
-    return TRUE;
-  }
-
-  drush_log(dt("Bootstrap to phase !phase.", array('!phase' => $max_phase_index)), LogLevel::BOOTSTRAP);
-  $phases = _drush_bootstrap_phases();
-  $result = TRUE;
-
-  // Try to bootstrap to the maximum possible level, without generating errors
-  foreach ($phases as $phase_index) {
-    if ($phase_index > $max_phase_index) {
-      // Stop trying, since we achieved what was specified.
-      break;
-    }
-
-    if (drush_bootstrap_validate($phase_index)) {
-      if ($phase_index > drush_get_context('DRUSH_BOOTSTRAP_PHASE', DRUSH_BOOTSTRAP_NONE)) {
-        $result = drush_bootstrap($phase_index, $max_phase_index);
-      }
-    }
-    else {
-      $result = FALSE;
-      break;
-    }
-  }
-
-  return $result;
+  return Drush::bootstrapManager()->bootstrapToPhaseIndex($max_phase_index);
 }
 
 /**
@@ -492,33 +232,7 @@ function drush_bootstrap_to_phase($max_phase_index) {
  *   The maximum phase to which we bootstrapped.
  */
 function drush_bootstrap_max($max_phase_index = FALSE) {
-  $phases = _drush_bootstrap_phases(TRUE);
-  if (!$max_phase_index) {
-    $max_phase_index = count($phases);
-  }
-
-  // Try to bootstrap to the maximum possible level, without generating errors.
-  foreach ($phases as $phase_index => $current_phase) {
-    if ($phase_index > $max_phase_index) {
-      // Stop trying, since we achieved what was specified.
-      break;
-    }
-
-    if (drush_bootstrap_validate($phase_index)) {
-      if ($phase_index > drush_get_context('DRUSH_BOOTSTRAP_PHASE')) {
-        drush_bootstrap($phase_index, $max_phase_index);
-      }
-    }
-    else {
-      // drush_bootstrap_validate() only logs successful validations. For us,
-      // knowing what failed can also be important.
-      $previous = drush_get_context('DRUSH_BOOTSTRAP_PHASE');
-      drush_log(dt("Bootstrap phase !function() failed to validate; continuing at !current().", array('!function' => $current_phase, '!current' => $phases[$previous])), 'debug');
-      break;
-    }
-  }
-
-  return drush_get_context('DRUSH_BOOTSTRAP_PHASE');
+  return Drush::bootstrapManager()->bootstrapMax($max_phase_index);
 }
 
 /**

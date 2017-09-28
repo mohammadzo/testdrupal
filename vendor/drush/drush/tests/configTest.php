@@ -10,10 +10,6 @@ namespace Unish;
 class ConfigCase extends CommandUnishTestCase {
 
   function setUp() {
-    if (UNISH_DRUPAL_MAJOR_VERSION < 8) {
-      $this->markTestSkipped('Config only available on D8+.');
-    }
-
     if (!$this->getSites()) {
       $this->setUpDrupal(1, TRUE);
       $this->drush('pm-enable', array('config'), $this->options());
@@ -27,26 +23,10 @@ class ConfigCase extends CommandUnishTestCase {
     $this->assertEquals("'system.site:name': config_test", $this->getOutput(), 'Config was successfully set and get.');
   }
 
-  function testConfigList() {
-    $options = $this->options();
-    $this->drush('config-list', array(), $options);
-    $result = $this->getOutputAsList();
-    $this->assertNotEmpty($result, 'An array of config names was returned.');
-    $this->assertTrue(in_array('update.settings', $result), 'update.settings name found in the config names.');
-
-    $this->drush('config-list', array('system'), $options);
-    $result = $this->getOutputAsList();
-    $this->assertTrue(in_array('system.site', $result), 'system.site found in list of config names with "system" prefix.');
-
-    $this->drush('config-list', array('system'), $options + array('format' => 'json'));
-    $result = $this->getOutputFromJSON();
-    $this->assertNotEmpty($result, 'Valid, non-empty JSON output was returned.');
-  }
-
   function testConfigExportImport() {
     $options = $this->options();
     // Get path to sync dir.
-    $this->drush('core-status', array('config-sync'), $options + array('format' => 'json'));
+    $this->drush('core-status', array(), $options + array('format' => 'json', 'fields' => 'config-sync'));
     $sync = $this->webroot() . '/' . $this->getOutputFromJSON('config-sync');
     $system_site_yml = $sync . '/system.site.yml';
     $core_extension_yml = $sync . '/core.extension.yml';
@@ -67,7 +47,7 @@ class ConfigCase extends CommandUnishTestCase {
     // Similar, but this time via --partial option.
     $contents = file_get_contents($system_site_yml);
     $contents = preg_replace('/front: .*/', 'front: unish partial', $contents);
-    $partial_path = UNISH_SANDBOX . '/partial';
+    $partial_path = self::getSandbox() . '/partial';
     mkdir($partial_path);
     $contents = file_put_contents($partial_path. '/system.site.yml', $contents);
     $this->drush('config-import', array(), $options + array('partial' => NULL, 'source' => $partial_path));

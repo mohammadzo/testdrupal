@@ -11,6 +11,7 @@
  * option in drushrc.php.
  */
 
+use Drush\Drush;
 use Drush\Log\LogLevel;
 
 /**
@@ -197,5 +198,5 @@ function drush_get_cid($prefix, $contexts = array(), $params = array()) {
     $cid[] = $param;
   }
 
-  return DRUSH_VERSION . '-' . $prefix . '-' . md5(implode("", $cid));
+  return Drush::getVersion() . '-' . $prefix . '-' . md5(implode("", $cid));
 }

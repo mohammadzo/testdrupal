@@ -1,18 +1,20 @@
 <?php
 
+use Consolidation\AnnotatedCommand\AnnotatedCommand;
+use Drush\Drush;
 use Drush\Log\LogLevel;
 use Webmozart\PathUtil\Path;
 use Consolidation\AnnotatedCommand\AnnotationData;
 use Drush\Command\DrushInputAdapter;
-use Drush\Command\DrushOutputAdapter;
 use Consolidation\AnnotatedCommand\CommandData;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * @defgroup dispatching Command dispatching functions.
  * @{
  *
  * These functions handle command dispatching, and can
- * be used to programatically invoke drush commands in
+ * be used to programmatically invoke Drush commands in
  * different ways.
  */
 
@@ -55,7 +57,7 @@ function drush_invoke($command, $arguments = array()) {
     return drush_dispatch($command, $arguments);
   }
   else {
-    return drush_set_error('DRUSH_COMMAND_NOT_FOUND', dt("The drush command '!command' could not be found.", array('!command' => $command)));
+    return drush_set_error('DRUSH_COMMAND_NOT_FOUND', dt("The Drush command '!command' could not be found.", array('!command' => $command)));
   }
 }
 
@@ -63,7 +65,7 @@ function drush_invoke($command, $arguments = array()) {
  * Invoke a command in a new process, targeting the site specified by
  * the provided site alias record.
  *
- * @param array $site_alias_record
+ * @param array|string $site_alias_record
  *  The site record to execute the command on.  Use '@self' to run on the current site.
  * @param string $command_name
  *  The command to invoke.
@@ -172,7 +174,7 @@ function drush_dispatch($command, $arguments = array()) {
     // Add command-specific options, if applicable.
     drush_command_default_options($command);
 
-    // Test to see if any of the options in the 'cli' context
+    // Test to see if any options or arguments in the 'cli' context
     // are not represented in the command structure.
     if ((_drush_verify_cli_options($command) === FALSE) || (_drush_verify_cli_arguments($command) === FALSE)) {
       return FALSE;
@@ -180,11 +182,6 @@ function drush_dispatch($command, $arguments = array()) {
 
     // Give command files an opportunity to alter the command record
     drush_command_invoke_all_ref('drush_command_alter', $command);
-
-    // Include and validate command engines.
-    if (drush_load_command_engines($command) === FALSE) {
-      return FALSE;
-    }
 
     // Do tilde expansion immediately prior to execution,
     // so that tildes are passed through unchanged for
@@ -200,7 +197,7 @@ function drush_dispatch($command, $arguments = array()) {
   }
 
   // Add a final log entry, just so a timestamp appears.
-  drush_log(dt('Command dispatch complete'), LogLevel::NOTICE);
+  drush_log(dt('Command dispatch complete'), LogLevel::INFO);
 
   return $return;
 }
@@ -332,7 +329,7 @@ function _drush_invoke_hooks($command, $args) {
   }
 
   // We will adapt and call as many of the annotated command hooks as we can.
-  // The following command hooks are not supported in Drush 8.x:
+  // The following command hooks are not presently supported in the legacy dispatcher:
   //   - Command Event: not called (requires CommandEvent object)
   //   - Option: Equivalent functionality supported in annotationcommand_adapter.inc
   //   - Interact: not called (We don't use SymfonyStyle in 8.x at the moment)
@@ -351,7 +348,7 @@ function _drush_invoke_hooks($command, $args) {
   $annotationData = $command['annotations'];
 
   $input = new DrushInputAdapter($args, annotationcommand_adapter_get_options($command), $command['command']);
-  $output = new DrushOutputAdapter();
+  $output = new ConsoleOutput();
   $commandData = new CommandData(
     $annotationData,
     $input,
@@ -518,77 +515,6 @@ function drush_handle_command_output($command, $structured_output) {
   if (empty($return)) {
     drush_backend_set_result($structured_output);
   }
-  // We skip empty strings and empty arrays, but note that 'empty'
-  // returns TRUE for the integer value '0', but we do want to print that.
-  // Only handle output here if the command defined an output format
-  // engine.  If no engine was declared, then we presume that the command
-  // handled its own output.
-  if ((!empty($structured_output) || ($structured_output === 0))) {
-    // If the command specifies a default pipe format and
-    // returned a result, then output the formatted output when
-    // in --pipe mode.
-    $formatter = drush_get_outputformat();
-    if (!$formatter && is_string($structured_output)) {
-      $formatter = drush_load_engine('outputformat', 'string');
-    }
-    if ($formatter) {
-      if ($formatter === TRUE) {
-        return drush_set_error(dt('No outputformat class defined for !format', array('!format' => $format)));
-      }
-      if ((!empty($command['engines']['outputformat'])) && (!in_array($formatter->engine, $command['engines']['outputformat']['usable']))) {
-        return $formatter->format_error(dt("The command '!command' does not produce output in a structure usable by this output format.", array('!command' => $command['command'])));
-      }
-      // Add any user-specified options to the metadata passed to the formatter.
-      $metadata = array();
-      $metadata['strict'] = drush_get_option('strict', FALSE);
-      if (isset($formatter->engine_config['options'])) {
-        $machine_parsable = $formatter->engine_config['engine-info']['machine-parsable'];
-        if (drush_get_option('full', FALSE)) {
-          if (isset($formatter->engine_config['fields-full'])) {
-            $formatter->engine_config['fields-default'] = $formatter->engine_config['fields-full'];
-          }
-          else {
-            $formatter->engine_config['fields-default'] = array_keys($formatter->engine_config['field-labels']);
-          }
-        }
-        elseif ((drush_get_context('DRUSH_PIPE') || $machine_parsable) && isset($formatter->engine_config['fields-pipe'])) {
-          $formatter->engine_config['fields-default'] = $formatter->engine_config['fields-pipe'];
-        }
-
-        // Determine the --format, and options relevant for that format.
-        foreach ($formatter->engine_config['options'] as $option => $option_info) {
-          $default_value = isset($formatter->engine_config[$option . '-default']) ? $formatter->engine_config[$option . '-default'] : FALSE;
-          if (($default_value === FALSE) && array_key_exists('default', $option_info)) {
-            $default_value = $option_info['default'];
-          }
-          if (isset($option_info['list'])) {
-            $user_specified_value = drush_get_option_list($option, $default_value);
-          }
-          else {
-            $user_specified_value = drush_get_option($option, $default_value);
-          }
-          if ($user_specified_value !== FALSE) {
-            if (array_key_exists('key', $option_info)) {
-              $option = $option_info['key'];
-            }
-            $metadata[$option] =$user_specified_value;
-          }
-        }
-      }
-      if (isset($metadata['fields']) && !empty($metadata['fields'])) {
-        if (isset($formatter->engine_config['field-labels'])) {
-          $formatter->engine_config['field-labels'] = drush_select_fields($formatter->engine_config['field-labels'], $metadata['fields'], $metadata['strict']);
-        }
-      }
-      $output = $formatter->process($structured_output, $metadata);
-      if (drush_get_context('DRUSH_PIPE')) {
-        drush_print_pipe($output);
-      }
-      else {
-        drush_print($output);
-      }
-    }
-  }
 }
 
 /**
@@ -598,24 +524,13 @@ function drush_handle_command_output($command, $structured_output) {
  */
 function _drush_verify_cli_options($command) {
 
-  // Start out with just the options in the current command record.
-  $options = _drush_get_command_options($command);
+  $options = drush_get_command_options_extended($command);
+
   // Skip all tests if the command is marked to allow anything.
-  // Also skip backend commands, which may have options on the commandline
-  // that were inherited from the calling command.
   if (($command['allow-additional-options'] === TRUE)) {
     return TRUE;
   }
-  // If 'allow-additional-options' contains a list of command names,
-  // then union together all of the options from all of the commands.
-  if (is_array($command['allow-additional-options'])) {
-    $implemented = drush_get_commands();
-    foreach ($command['allow-additional-options'] as $subcommand_name) {
-      if (array_key_exists($subcommand_name, $implemented)) {
-        $options = array_merge($options, _drush_get_command_options($implemented[$subcommand_name]));
-      }
-    }
-  }
+
   // Also add in global options
   $options = array_merge($options, drush_get_global_options());
 
@@ -716,13 +631,26 @@ function _drush_get_command_options($command) {
 
 /**
  * Return the list of all of the options for the given
- * command record including options provided by engines and additional-options.
+ * command record including options provided by hooks and additional-options.
  */
 function drush_get_command_options_extended($command) {
-  drush_merge_engine_data($command);
+  if (annotation_adapter_is_annotated($command)) {
+    // The canonical options list is now in $application
+    $application = Drush::getApplication();
+    $console = $application->get($command['command']);
+    if ($console instanceof AnnotatedCommand) {
+      $console->optionsHook();
+    }
+    $options = $console->getDefinition()->getOptions();
+    // Add formatter options. See \Consolidation\OutputFormatters\Options\FormatterOptions
+    // @todo Move this out of Drush.
+    $options['include-field-labels'] = '';
+  }
+  else {
+    // Start out with just the options in the current command record.
+    $options = _drush_get_command_options($command);
+  }
 
-  // Start out with just the options in the current command record.
-  $options = _drush_get_command_options($command);
   // If 'allow-additional-options' contains a list of command names,
   // then union together all of the options from all of the commands.
   if (is_array($command['allow-additional-options'])) {
@@ -733,6 +661,7 @@ function drush_get_command_options_extended($command) {
       }
     }
   }
+
   return $options;
 }
 
@@ -828,6 +757,7 @@ function drush_redispatch_get_options() {
  * Parse console arguments.
  */
 function drush_parse_args() {
+  $sawDashDash = false;
   $args = drush_get_context('argv');
   $command_args = NULL;
   $global_options = array();
@@ -855,8 +785,11 @@ function drush_parse_args() {
     if (is_array($command_args)) {
       $command_args[] = $opt;
     }
+    if ($opt == '--') {
+      $sawDashDash = true;
+    }
     // Is the arg an option (starting with '-')?
-    if (!empty($opt) && $opt{0} == "-" && strlen($opt) != 1) {
+    elseif (!$sawDashDash && !empty($opt) && $opt{0} == "-" && strlen($opt) != 1) {
       // Do we have multiple options behind one '-'?
       if (strlen($opt) > 2 && $opt{1} != "-") {
         // Each char becomes a key of its own.
@@ -921,7 +854,7 @@ function drush_parse_args() {
       $arguments = array('version');
     }
     else {
-      $arguments = array('help');
+      $arguments = array('list');
     }
   }
   if (is_array($command_args)) {
@@ -1096,9 +1029,6 @@ function drush_get_commands($reset = FALSE) {
         // Add some defaults and normalize the command descriptor.
         $command += drush_command_defaults($key, $commandfile, $path);
 
-        // Add engine data.
-        drush_merge_engine_data($command);
-
         // Translate command.
         drush_command_translate($command);
 
@@ -1254,7 +1184,6 @@ function drush_command_defaults($key, $commandfile, $path) {
     'drush dependencies' => array(),
     'handle-remote-commands' => FALSE,
     'remote-tty' => FALSE,
-    'strict-option-handling' => FALSE,
     'tilde-expansion' => TRUE,
     'bootstrap_errors' => array(),
     'topics' => array(),
@@ -1274,9 +1203,9 @@ function drush_command_defaults($key, $commandfile, $path) {
   // options list.  Later, the bootstrap object can also provide
   // additional defaults if needed.  The bootstrap command defaults
   // will be merged into the command object again just before
-  // running it in bootstrap_and_dispatch().
-  if ($bootstrap = drush_get_bootstrap_object()) {
-    $defaults = array_merge($defaults, $bootstrap->command_defaults());
+  // running it in bootstrapAndDispatch().
+  if ($bootstrap = Drush::bootstrap()) {
+    $defaults = array_merge($defaults, $bootstrap->commandDefaults());
   }
   return $defaults;
 }
@@ -1353,59 +1282,6 @@ function _drush_command_translate($source) {
  * - remote-tty: set to TRUE if Drush should force ssh to allocate a pseudo-tty
  *   when this command is being called remotely.  Important for interactive commands.
  *   Remote commands that allocate a psedo-tty always print "Connection closed..." when done.
- * - strict-option-handling: set to TRUE if drush should strictly separate local command
- *   cli options from the global options.  Usually, drush allows global cli options and
- *   command cli options to be interspersed freely on the commandline.  For commands where
- *   this flag is set, options are separated, with global options comming before the
- *   command names, and command options coming after, like so:
- *     drush --global-options command --command-options
- *   In this mode, the command options are no longer available via drush_get_option();
- *   instead, they can be retrieved via:
- *     $args = drush_get_original_cli_args_and_options();
- *     $args = drush_get_context('DRUSH_COMMAND_ARGS', array());
- *   In this case, $args will contain the command args and options literally, exactly as they
- *   were entered on the command line, and in the same order as they appeared.
- * - 'outputformat': declares the data format to be used to render the
- *   command result.  In addition to the output format engine options
- *   listed below, each output format type can take additional metadata
- *   items that control the way that the output is rendered.  See the
- *   comment in each particular output format class for information. The
- *   Drush core output format engines can be found in commands/core/outputformat.
- *     - 'default': The default type to render output as. If declared, the
- *       command should not print any output on its own, but instead should
- *       return a data structure (usually an associative array) that can
- *       be rendered by the output type selected.
- *     - 'pipe-format': When the command is executed in --pipe mode, the
- *       command output will be rendered by the format specified by the
- *       pipe-format item instead of the default format.  Note that in
- *       either event, the user may specify the format to use via the
- *       --format command-line option.
- *     - 'formatted-filter': specifies a function callback that will be
- *       used to filter the command result if the selected output formatter
- *       is NOT declared to be machine-parsable.  "table" is an example of
- *       an output format that is not machine-parsable.
- *     - 'parsable-filter': function callback that will be used to filter the
- *       command result if the selected output formatter is declared to be
- *       machine-parsable. "var_export" is an example of an output format that
- *       is machine-parsable.
- *     - 'output-data-type': An identifier representing the data structure that
- *       the command returns.  @see outputformat_drush_engine_outputformat() for
- *       a description of the supported values.
- *     - 'field-labels': A mapping from machine name to human-readable name
- *       for all of the fields in a table-format command result.  All
- *       possible field names should appear in this list.
- *     - 'fields-default': A list of the machine names of the fields that
- *       should be displayed by default in tables.
- *     - 'private-fields': A list of any fields that contain sensitive
- *       information, such as passwords.  By default, Drush will hide private
- *       fields before printing the results to the console, but will include
- *       them in backend invoke results. Use --show-passwords to display.
- *     - 'column-widths': A mapping from field machine name to the column width
- *       that should be used in table output.  Drush will automatically
- *       calculate the width of any field not listed here based on the length
- *       of the data items in it.
- * - engines: declares information on Drush engines the command will load.
- *   Available engines can vary by command type.
  *
  * @return bool|array
  *   A command definition.
@@ -1423,16 +1299,7 @@ function drush_parse_command() {
 
   // We have found a command that matches. Set the appropriate values.
   if ($command) {
-    // Special case. Force help command if --help option was specified.
-    if (drush_get_option('help')) {
-      $arguments = array($command['command']);
-      $command = $implemented['helpsingle'];
-      $command['arguments'] = $arguments;
-      $command['allow-additional-options'] = TRUE;
-    }
-    else {
-      _drush_prepare_command($command, $arguments);
-    }
+    _drush_prepare_command($command, $arguments);
     drush_set_command($command);
   }
   return $command;
@@ -1578,8 +1445,8 @@ function drush_commandfile_list() {
 
 function _drush_find_commandfiles($phase, $phase_max = FALSE) {
   drush_log(dt("Find command files for phase !phase (max=!max)", array('!phase' => $phase, '!max' => (string)$phase_max)), LogLevel::DEBUG);
-  if ($bootstrap = drush_get_bootstrap_object()) {
-    $searchpath = $bootstrap->commandfile_searchpaths($phase, $phase_max);
+  if ($bootstrap = Drush::bootstrap()) {
+    $searchpath = $bootstrap->commandfileSearchpaths($phase, $phase_max);
     _drush_add_commandfiles($searchpath, $phase);
     annotationcommand_adapter_discover($searchpath, $phase, $phase_max);
   }
@@ -1746,23 +1613,6 @@ function drush_command_set_command_specific($command_default_options, $command =
     // options such as -y and -v.
     if (!empty($options_were_set)) {
       _drush_preflight_global_options();
-    }
-    // If the command uses strict option handling, back out any global
-    // options that were set.
-    if ($command['strict-option-handling']) {
-      $global_options = drush_get_global_options();
-      foreach ($options_were_set as $key) {
-        if (array_key_exists($key, $global_options)) {
-          if (!array_key_exists('context', $global_options[$key])) {
-            $strict_options_warning =& drush_get_context('DRUSH_STRICT_OPTIONS_WARNING', array());
-            if (!array_key_exists($key, $strict_options_warning)) {
-              drush_log(dt("Global option --!option not supported in command-specific options for command !command due to a limitation in strict option handling.", array('!option' => $key, '!command' => $command['command'])), LogLevel::WARNING);
-              $strict_options_warning[$key] = TRUE;
-            }
-          }
-          drush_unset_option($key, 'specific');
-        }
-      }
     }
   }
 }
@@ -1999,7 +1849,7 @@ function commandfiles_cache() {
   static $commandfiles_cache = NULL;
 
   if (!isset($commandfiles_cache)) {
-    $commandfiles_cache = new Drush\Command\Commandfiles();
+    $commandfiles_cache = new \Drush\Command\Commandfiles();
   }
   return $commandfiles_cache;
 }

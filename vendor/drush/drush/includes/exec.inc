@@ -140,9 +140,7 @@ function _drush_shell_exec($args, $interactive = FALSE) {
     $command = call_user_func_array('sprintf', $args);
   }
 
-  if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
-    drush_print('Executing: ' . $command, 0, STDERR);
-  }
+  drush_log('Executing: ' . $command, LogLevel::INFO);
   if (!drush_get_context('DRUSH_SIMULATE')) {
     if ($interactive) {
       $result = drush_shell_proc_open($command);
@@ -152,7 +150,7 @@ function _drush_shell_exec($args, $interactive = FALSE) {
       exec($command . ' 2>&1', $output, $result);
       _drush_shell_exec_output_set($output);
 
-      if (drush_get_context('DRUSH_DEBUG')) {
+      if (drush_get_context('DRUSH_DEBUG_NOTIFY')) {
         foreach ($output as $line) {
           drush_print($line, 2);
         }
@@ -248,18 +246,6 @@ function drush_shell_proc_open($cmd) {
     return ($proc_status["running"] ? $exit_code : $proc_status["exitcode"] );
   }
   return 0;
-}
-
-/**
- * Used by definition of ssh and other commands that call into drush_shell_proc_build()
- * to declare their options.
- */
-function drush_shell_exec_proc_build_options() {
-  return array(
-   'ssh-options' => 'A string of extra options that will be passed to the ssh command (e.g. "-p 100")',
-    'tty' => 'Create a tty (e.g. to run an interactive program).',
-    'escaped' => 'Command string already escaped; do not add additional quoting.',
-  );
 }
 
 /**
@@ -362,7 +348,7 @@ function drush_start_browser($uri = NULL, $sleep = FALSE, $port = FALSE) {
     // We can only open a browser if we have a DISPLAY environment variable on
     // POSIX or are running Windows or OS X.
     if (!drush_get_context('DRUSH_SIMULATE') && !getenv('DISPLAY') && !drush_is_windows() && !drush_is_osx()) {
-      drush_log(dt('No graphical display appears to be available, not starting browser.'), LogLevel::NOTICE);
+      drush_log(dt('No graphical display appears to be available, not starting browser.'), LogLevel::INFO);
       return FALSE;
     }
     $host = parse_url($uri, PHP_URL_HOST);

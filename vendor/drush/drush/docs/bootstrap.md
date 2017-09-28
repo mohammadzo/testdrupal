@@ -2,7 +2,7 @@ The Drush Bootstrap Process
 ===========================
 When preparing to run a command, Drush works by "bootstrapping" the Drupal environment in very much the same way that is done during a normal page request from the web server, so most Drush commands run in the context of a fully-initialized website.
 
-For efficiency and convenience, some Drush commands can work without first bootstrapping a Drupal site, or by only partially bootstrapping a site. This is faster than a full bootstrap. It is also a matter of convenience, because some commands are useful even when you don't have a working Drupal site. For example, you can use Drush to download Drupal with `drush dl drupal`. This obviously does not require any bootstrapping to work.
+For efficiency and convenience, some Drush commands can work without first bootstrapping a Drupal site, or by only partially bootstrapping a site. This is faster than a full bootstrap. It is also a matter of convenience, because some commands are useful even when you don't have a working Drupal site.
 
 DRUSH\_BOOTSTRAP\_NONE
 -----------------------
@@ -27,10 +27,6 @@ Connect to the Drupal database using the database credentials loaded during the 
 DRUSH\_BOOTSTRAP\_DRUPAL\_FULL
 ------------------------------
 Fully initialize Drupal. This is analogous to the DRUPAL\_BOOTSTRAP\_FULL bootstrap phase in Drupal. Any code that interacts with the general Drupal API should be bootstrapped to this phase.
-
-DRUSH\_BOOTSTRAP\_DRUPAL\_LOGIN
--------------------------------
-Log in to the initialiazed Drupal site. This bootstrap phase is used after the site has been fully bootstrapped. This is the default bootstrap phase all commands will try to reach, unless otherwise specified. This phase will log you in to the drupal site with the username or user ID specified by the --user/ -u option(defaults to 0, anonymous). Use this bootstrap phase for your command if you need to have access to information for a specific user, such as listing nodes that might be different based on who is logged in.
 
 DRUSH\_BOOTSTRAP\_MAX
 ---------------------
