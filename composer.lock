@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c0003294fa4a07f372f1380efe91a339",
+    "content-hash": "d84a269c2d8fb9a5c0b372ac688f20f7",
     "packages": [
         {
             "name": "alchemy/zippy",
@@ -1337,11 +1337,17 @@
         },
         {
             "name": "drupal/admin_toolbar",
-            "version": "dev-1.x",
+            "version": "1.20.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupal.org/project/admin_toolbar",
-                "reference": "bba8bb6d9c583ef2532dc051bbb743fa446dc7c5"
+                "reference": "8.x-1.20"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/admin_toolbar-8.x-1.20.zip",
+                "reference": "8.x-1.20",
+                "shasum": "ebeb6b630c0c614b36263ac4a024b269113b6a99"
             },
             "require": {
                 "drupal/core": "*"
@@ -1352,11 +1358,11 @@
                     "dev-1.x": "1.x-dev"
                 },
                 "drupal": {
-                    "version": "8.x-1.20+6-dev",
-                    "datestamp": "1506613144",
+                    "version": "8.x-1.20",
+                    "datestamp": "1505199844",
                     "security-coverage": {
-                        "status": "not-covered",
-                        "message": "Dev releases are not covered by Drupal security advisories."
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
                     }
                 }
             },
@@ -1399,8 +1405,7 @@
             "support": {
                 "source": "http://cgit.drupalcode.org/admin_toolbar",
                 "issues": "https://www.drupal.org/project/issues/admin_toolbar"
-            },
-            "time": "2017-09-28T18:05:51+00:00"
+            }
         },
         {
             "name": "drupal/backup_db",
@@ -6967,7 +6972,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "drupal/admin_toolbar": 20,
         "drush/drush": 20
     },
     "prefer-stable": true,
