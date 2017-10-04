@@ -11,6 +11,7 @@ use Drush\Commands\generate\Helper\InputHandler;
 use Drush\Commands\generate\Helper\OutputHandler;
 use Drush\Commands\help\ListCommands;
 use Drush\Drush;
+use Drush\Drupal\DrushServiceModifier;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Filesystem\Filesystem;
@@ -38,10 +39,10 @@ class GenerateCommands extends DrushCommands
      *  Generate a controller class for your module.
      * @usage drush generate drush-command-file
      *  Generate a Drush commandfile for your module.
-     * @topics docs-generators
-     * @bootstrap DRUSH_BOOTSTRAP_MAX
+     * @topics docs:generators
+     * @bootstrap max
      */
-    public function generate($generator, $options = ['answers' => null, 'directory' => null])
+    public function generate($generator = '', $options = ['answers' => null, 'directory' => null])
     {
 
         // Disallow default Symfony console commands.
@@ -105,7 +106,9 @@ class GenerateCommands extends DrushCommands
         $module_generators = [];
         if (drush_has_boostrapped(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
             $container = \Drupal::getContainer();
-            $module_generators = $container->get('drush.service.generators')->getCommandList();
+            if ($container->has(DrushServiceModifier::DRUSH_GENERATOR_SERVICES)) {
+                $module_generators = $container->get(DrushServiceModifier::DRUSH_GENERATOR_SERVICES)->getCommandList();
+            }
         }
 
         /** @var \Symfony\Component\Console\Command\Command[] $generators */
@@ -121,6 +124,12 @@ class GenerateCommands extends DrushCommands
             $generator->setName($new_name);
             // Remove alias if it is same as new name.
             if ($aliases = $generator->getAliases()) {
+                foreach ($aliases as $key => $alias) {
+                    // These dont work due to Console 'guessing' wrong.
+                    if ($alias == 'module' || $alias == 'theme') {
+                        unset($aliases[$key]);
+                    }
+                }
                 $generator->setAliases(array_diff($aliases, [$new_name]));
             }
         }

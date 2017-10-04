@@ -68,16 +68,16 @@ class ConfigExportCommands extends DrushCommands
     /**
      * Export Drupal configuration to a directory.
      *
-     * @command config-export
+     * @command config:export
      * @interact-config-label
      * @param string $label A config directory label (i.e. a key in $config_directories array in settings.php).
      * @option add Run `git add -p` after exporting. This lets you choose which config changes to sync for commit.
      * @option commit Run `git add -A` and `git commit` after exporting.  This commits everything that was exported without prompting.
      * @option message Commit comment for the exported configuration.  Optional; may only be used with --commit.
      * @option destination An arbitrary directory that should receive the exported files. An alternative to label argument.
-     * @usage drush config-export --destination
+     * @usage drush config:export --destination
      *   Export configuration; Save files in a backup directory named config-export.
-     * @aliases cex
+     * @aliases cex,config-export
      */
     public function export($label = null, $options = ['add' => false, 'commit' => false, 'message' => null, 'destination' => ''])
     {
@@ -111,23 +111,22 @@ class ConfigExportCommands extends DrushCommands
 
     public function doExport($options, $destination_dir)
     {
+        // Prepare the configuration storage for the export.
+        if ($destination_dir == \config_get_config_directory(CONFIG_SYNC_DIRECTORY)) {
+            $target_storage = $this->getConfigStorageSync();
+        } else {
+            $target_storage = new FileStorage($destination_dir);
+        }
+
         if (count(glob($destination_dir . '/*')) > 0) {
             // Retrieve a list of differences between the active and target configuration (if any).
-            if ($destination_dir == \config_get_config_directory(CONFIG_SYNC_DIRECTORY)) {
-                $target_storage = $this->getConfigStorageSync();
-            } else {
-                $target_storage = new FileStorage($destination_dir);
-            }
-            $active_storage = $this->getConfigStorage();
-            $comparison_source = $active_storage;
-
-            $config_comparer = new StorageComparer($comparison_source, $target_storage, $this->getConfigManager());
+            $config_comparer = new StorageComparer($this->getConfigStorage(), $target_storage, $this->getConfigManager());
             if (!$config_comparer->createChangelist()->hasChanges()) {
                 $this->logger()->notice(dt('The active configuration is identical to the configuration in the export directory (!target).', array('!target' => $destination_dir)));
                 return;
             }
 
-            drush_print("Differences of the active config to the export directory:\n");
+            $this->output()->writeln("Differences of the active config to the export directory:\n");
             $change_list = array();
             foreach ($config_comparer->getAllCollectionNames() as $collection) {
                 $change_list[$collection] = $config_comparer->getChangelist(null, $collection);
@@ -149,25 +148,7 @@ class ConfigExportCommands extends DrushCommands
         }
 
         // Write all .yml files.
-        $source_storage = $this->getConfigStorage();
-        if ($destination_dir == \config_get_config_directory(CONFIG_SYNC_DIRECTORY)) {
-            $destination_storage = $this->getConfigStorageSync();
-        } else {
-            $destination_storage = new FileStorage($destination_dir);
-        }
-
-        foreach ($source_storage->listAll() as $name) {
-            $destination_storage->write($name, $source_storage->read($name));
-        }
-
-        // Export configuration collections.
-        foreach ($this->getConfigStorage()->getAllCollectionNames() as $collection) {
-            $source_storage = $source_storage->createCollection($collection);
-            $destination_storage = $destination_storage->createCollection($collection);
-            foreach ($source_storage->listAll() as $name) {
-                $destination_storage->write($name, $source_storage->read($name));
-            }
-        }
+        ConfigCommands::copyConfig($this->getConfigStorage(), $target_storage);
 
         $this->logger()->success(dt('Configuration successfully exported to !target.', array('!target' => $destination_dir)));
         drush_backend_set_result($destination_dir);
@@ -215,13 +196,8 @@ class ConfigExportCommands extends DrushCommands
         }
 
         if (!empty($destination)) {
-            $additional = array();
-            $values = drush_sitealias_evaluate_path($destination, $additional, true);
-            if (!isset($values['path'])) {
-                throw new \Exception('The destination directory could not be evaluated.');
-            }
-            $destination = $values['path'];
-            $commandData->input()->setOption('destination', $destination);
+            // TODO: evaluate %files et. al. in destination
+            // $commandData->input()->setOption('destination', $destination);
             if (!file_exists($destination)) {
                 $parent = dirname($destination);
                 if (!is_dir($parent)) {

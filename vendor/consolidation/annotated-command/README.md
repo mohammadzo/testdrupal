@@ -105,22 +105,53 @@ The hook **target** specifies which command or commands the hook will be attache
 - An annotation (e.g. `@foo`) will attach the hook to any command that is annotated with the given label.
 - If the target is omitted, then the hook will be attached to every command defined in the same class as the hook implementation.
 
-There are ten types of hooks supported:
+There are ten types of hooks in the command processing request flow:
 
-- Command Event (Symfony)
-- Option
-- Initialize (Symfony)
-- Interact (Symfony)
-- Validate
-- Command
-- Process
-- Alter
-- Status
-- Extract
-- On-event
-- Replace Command
+- [Command Event](#command-event-hook) (Symfony)
+   - @pre-command-event
+   - @command-event
+   - @post-command-event
+- [Option](#option-event-hook)
+   - @pre-option
+   - @option
+   - @post-option
+- [Initialize](#initialize-hook) (Symfony)
+   - @pre-init
+   - @init
+   - @post-init
+- [Interact](#interact-hook) (Symfony)
+   - @pre-interact
+   - @interact
+   - @post-interact
+- [Validate](#validate-hook)
+   - @pre-validate
+   - @validate
+   - @post-validate
+- [Command](#command-hook)
+   - @pre-command
+   - @command
+   - @command-init
+- [Process](#process-hook)
+   - @pre-process
+   - @process
+   - @post-process
+- [Alter](#alter-hook)
+   - @pre-alter
+   - @alter
+   - @post-alter
+- [Status](#status-hook)
+   - @status
+- [Extract](#extract-hook)
+   - @extract
+   
+In addition to these, there are two more hooks available:
 
-Most of these also have "pre" and "post" varieties, to give more flexibility vis-a-vis hook ordering (and for consistency). Within one type of hook, the running order is undefined and not guaranteed. Note that many validate, process and alter hooks may run, but the first status or extract hook that successfully returns a result will halt processing of further hooks of the same type.
+- [On-event](#on-event-hook)
+   - @on-event
+- [Replace Command](#replace-command-hook)
+   - @replace-command
+
+The "pre" and "post" varieties of these hooks, where avalable, give more flexibility vis-a-vis hook ordering (and for consistency). Within one type of hook, the running order is undefined and not guaranteed. Note that many validate, process and alter hooks may run, but the first status or extract hook that successfully returns a result will halt processing of further hooks of the same type.
 
 Each hook has an interface that defines its calling conventions; however, any callable may be used when registering a hook, which is convenient if versions of PHP prior to 7.0 (with no anonymous classes) need to be supported.
 

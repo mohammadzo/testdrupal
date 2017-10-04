@@ -3,6 +3,7 @@ namespace Drush\Commands;
 
 use Consolidation\AnnotatedCommand\CommandData;
 use Consolidation\OutputFormatters\StructuredData\RowsOfFields;
+use Drush\Utils\StringUtils;
 
 /**
  * Run these commands using the --include option - e.g. `drush --include=/path/to/drush/examples mmas`
@@ -28,14 +29,14 @@ class SandwichCommands extends DrushCommands {
    * @aliases mmas
    */
   public function makeSandwich($filling, $options = ['spreads' => NULL]) {
-    if ($spreads = _convert_csv_to_array('spreads')) {
+    if ($spreads = StringUtils::csvToArray('spreads')) {
       $list = implode(' and ', $spreads);
       $str_spreads = ' with just a dash of ' . $list;
     }
     $msg = dt('Okay. Enjoy this !filling sandwich!str_spreads.',
       array('!filling' => $filling, '!str_spreads' => $str_spreads)
     );
-    drush_print("\n" . $msg . "\n");
+    $this->output()->writeln("\n" . $msg . "\n");
     $this->printFile(__DIR__ . '/sandwich-nocolor.txt');
   }
 
