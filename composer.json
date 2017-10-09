@@ -27,6 +27,7 @@
         "drupal/core": "~8.0",
         "drupal/devel": "^1.0",
         "drupal/pathauto": "^1.0",
+        "drupal/reCAPTCHA": "^2.2",
         "drupal/scheduler": "^1.0@RC",
         "drush/drush": "9.*@dev",
         "webflo/drupal-finder": "^1.0.0",
