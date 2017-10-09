@@ -39,7 +39,6 @@
  *   the matching configuration file through the drush_save_config() function.
  */
 
-use Drush\Drush;
 use Drush\Log\LogLevel;
 
 
@@ -81,6 +80,100 @@ function drush_context_names() {
     'drush', 'default');
 
   return $contexts;
+}
+
+/**
+ * Return a list of possible drushrc file locations.
+ *
+ * @context
+ *   A valid drush context from drush_context_names().
+ * @prefix
+ *   Optional. Specify a prefix to prepend to ".drushrc.php" when looking
+ *   for config files. Most likely used by contrib commands.
+ * @return
+ *   An associative array containing possible config files to load
+ *   The keys are the 'context' of the files, the values are the file
+ *   system locations.
+ */
+function _drush_config_file($context, $prefix = NULL, $version = '') {
+  $configs = array();
+  $base_name = 'drush' . $version . 'rc.php';
+  $config_file = $prefix ? $prefix . '.' . $base_name : $base_name;
+
+  // Did the user explicitly specify a config file?
+  if ($config_list = (array)drush_get_context('DRUSH_CONFIG')) {
+    foreach ($config_list as $config) {
+      if (is_dir($config)) {
+        $config = $config . '/' . $config_file;
+      }
+      $configs['custom'][] = $config;
+    }
+  }
+
+  if ($drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT')) {
+    $configs['drupal'] = array(
+      $drupal_root . '/../drush/' . $config_file,
+      $drupal_root . '/sites/all/drush/' . $config_file,
+      $drupal_root . '/drush/' . $config_file,
+    );
+
+    if ($conf_path = drush_get_context('DRUSH_SELECTED_DRUPAL_SITE_CONF_PATH', 'sites/default')) {
+      $site_path = $drupal_root . '/' . $conf_path;
+      $configs['site'] = $site_path . "/" . $config_file;
+    }
+  }
+
+  // in the user home directory
+  $server_home = drush_server_home();
+  if (isset($server_home)) {
+    $configs['user'] = $server_home . '/.' . $config_file;
+  }
+
+  // in $HOME/.drush directory
+  $per_user_config_dir = drush_get_context('DRUSH_PER_USER_CONFIGURATION');
+  if (!empty($per_user_config_dir)) {
+    $configs['home.drush'] = $per_user_config_dir . '/' . $config_file;
+  }
+
+  // In the system wide configuration folder.
+  $configs['system'] = drush_get_context('DRUSH_SITE_WIDE_CONFIGURATION') . '/' . $config_file;
+
+  // in the drush installation folder
+  $configs['drush'] = dirname(__FILE__) . '/../' . $config_file;
+
+  return empty($configs[$context]) ? '' : $configs[$context];
+}
+
+
+/**
+ * Load drushrc files (if available) from several possible locations.
+ */
+function drush_load_config($context) {
+  drush_load_config_file($context, _drush_config_file($context));
+  drush_load_config_file($context, _drush_config_file($context, '', DRUSH_MAJOR_VERSION));
+}
+
+function drush_load_config_file($context, $config_list) {
+  foreach ((array)$config_list as $config) {
+    if (file_exists($config)) {
+      $options = $aliases = $command_specific = $override = array();
+      drush_log(dt('Loading drushrc "!config" into "!context" scope.', array('!config' => realpath($config), '!context' => $context)), LogLevel::BOOTSTRAP);
+      $ret = @include_once($config);
+      if ($ret === FALSE) {
+        drush_log(dt('Cannot open drushrc "!config", ignoring.', array('!config' => realpath($config))), LogLevel::WARNING);
+        return FALSE;
+      }
+      if (!empty($options) || !empty($aliases) || !empty($command_specific) || !empty($override)) {
+        $options = array_merge(drush_get_context($context), $options);
+        $options['config-file'] = realpath($config);
+
+        unset($options['site-aliases']);
+        $options['command-specific'] = array_merge(isset($command_specific) ? $command_specific : array(), isset($options['command-specific']) ? $options['command-specific'] : array());
+
+        drush_set_config_options($context, $options, $override);
+      }
+    }
+  }
 }
 
 function drush_set_config_options($context, $options, $override = array()) {
@@ -313,12 +406,6 @@ function drush_get_command() {
  *   Optional. The context to check for the option. If this is set, only this context will be searched.
  */
 function drush_get_option($option, $default = NULL, $context = NULL) {
-  // Uncomment when fumigating.
-//  $backtrace = debug_backtrace()[1];
-//  if (!strpos($backtrace['file'], 'engines') && !strpos($backtrace['file'], 'preflight') && !strpos($backtrace['file'], 'backend')) {
-//    drush_log('drush_get_option() has been deprecated and is unreliable. Called by '. $backtrace['function']. ' in '. $backtrace['file']. ':'. $backtrace['line'], LogLevel::WARNING);
-//  }
-
   $value = NULL;
 
   if ($context) {
@@ -457,6 +544,22 @@ function drush_get_merged_options() {
 }
 
 /**
+ * Retrieves a collapsed list of all options
+ * with a specified prefix.
+ */
+function drush_get_merged_prefixed_options($prefix) {
+  $merged_options = drush_get_merged_options();
+  $result = array();
+  foreach ($merged_options as $key => $value) {
+    if ($prefix == substr($key, 0, strlen($prefix))) {
+      $result[substr($key, strlen($prefix))] = $value;
+    }
+  }
+
+  return $result;
+}
+
+/**
  * Helper function to recurse through possible option names
  */
 function _drush_get_option($option, $context) {
@@ -527,4 +630,40 @@ function drush_unset_option($option, $context = NULL) {
       drush_unset_option($option, $context);
     }
   }
+}
+
+/**
+ * Save the settings in a specific context to the applicable configuration file
+ * This is useful is you want certain settings to be available automatically the next time a command is executed.
+ *
+ * @param $context
+ *   The context to save
+ */
+function drush_save_config($context) {
+  $filename = _drush_config_file($context);
+  if (is_array($filename)) {
+    $filename = $filename[0];
+  }
+
+  if ($filename) {
+    $cache = drush_get_context($context);
+
+    $fp = fopen($filename, "w+");
+    if (!$fp) {
+      return drush_set_error('DRUSH_PERM_ERROR', dt('Drushrc (!filename) could not be written', array('!filename' => $filename)));
+    }
+    else {
+      fwrite($fp, "<?php\n");
+      foreach ($cache as $key => $value) {
+        $line = "\n\$options['$key'] = ". var_export($value, TRUE) .';';
+        fwrite($fp, $line);
+      }
+      fwrite($fp, "\n");
+      fclose($fp);
+      drush_log(dt('Drushrc file (!filename) was written successfully', array('!filename' => $filename)));
+      return TRUE;
+    }
+
+  }
+  return FALSE;
 }
