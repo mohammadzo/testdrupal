@@ -2,7 +2,6 @@
 
 namespace Drupal\views\Plugin\views\filter;
 
-use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -266,7 +265,7 @@ class StringFilter extends FilterPluginBase {
   }
 
   protected function opContainsWord($field) {
-    $where = $this->operator == 'word' ? new Condition('OR') : new Condition('AND');
+    $where = $this->operator == 'word' ? db_or() : db_and();
 
     // Don't filter on empty strings.
     if (empty($this->value)) {

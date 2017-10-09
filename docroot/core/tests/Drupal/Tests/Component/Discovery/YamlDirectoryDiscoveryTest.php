@@ -4,9 +4,8 @@ namespace Drupal\Tests\Component\Discovery;
 
 use Drupal\Component\Discovery\DiscoveryException;
 use Drupal\Component\Discovery\YamlDirectoryDiscovery;
-use Drupal\Component\FileCache\FileCacheFactory;
+use Drupal\Tests\UnitTestCase;
 use org\bovigo\vfs\vfsStream;
-use PHPUnit\Framework\TestCase;
 
 /**
  * YamlDirectoryDiscoveryTest component unit tests.
@@ -15,15 +14,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @group Discovery
  */
-class YamlDirectoryDiscoveryTest extends TestCase {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    // Ensure that FileCacheFactory has a prefix.
-    FileCacheFactory::setPrefix('prefix');
-  }
+class YamlDirectoryDiscoveryTest extends UnitTestCase {
 
   /**
    * Tests YAML directory discovery.

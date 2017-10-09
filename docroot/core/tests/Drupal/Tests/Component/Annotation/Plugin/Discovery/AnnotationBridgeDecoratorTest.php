@@ -6,13 +6,13 @@ use Drupal\Component\Annotation\Plugin;
 use Drupal\Component\Annotation\Plugin\Discovery\AnnotationBridgeDecorator;
 use Drupal\Component\Plugin\Definition\PluginDefinition;
 use Drupal\Component\Plugin\Discovery\DiscoveryInterface;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\Component\Annotation\Plugin\Discovery\AnnotationBridgeDecorator
  * @group Plugin
  */
-class AnnotationBridgeDecoratorTest extends TestCase {
+class AnnotationBridgeDecoratorTest extends UnitTestCase {
 
   /**
    * @covers ::getDefinitions

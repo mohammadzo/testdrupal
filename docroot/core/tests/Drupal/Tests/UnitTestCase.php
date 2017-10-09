@@ -8,7 +8,6 @@ use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\PluralTranslatableMarkup;
-use PHPUnit\Framework\TestCase;
 
 
 /**
@@ -16,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @ingroup testing
  */
-abstract class UnitTestCase extends TestCase {
+abstract class UnitTestCase extends \PHPUnit_Framework_TestCase {
 
   /**
    * The random generator.

@@ -4,15 +4,12 @@ namespace Drupal\Tests\rest\Functional\EntityResource\Item;
 
 use Drupal\aggregator\Entity\Feed;
 use Drupal\aggregator\Entity\Item;
-use Drupal\Tests\rest\Functional\BcTimestampNormalizerUnixTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\EntityResourceTestBase;
 
 /**
  * ResourceTestBase for Item entity.
  */
 abstract class ItemResourceTestBase extends EntityResourceTestBase {
-
-  use BcTimestampNormalizerUnixTestTrait;
 
   /**
    * {@inheritdoc}
@@ -116,7 +113,9 @@ abstract class ItemResourceTestBase extends EntityResourceTestBase {
       'author' => [],
       'description' => [],
       'timestamp' => [
-        $this->formatExpectedTimestampItemValues(123456789),
+        [
+          'value' => 123456789,
+        ],
       ],
       'guid' => [],
     ];

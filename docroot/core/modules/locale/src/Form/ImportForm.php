@@ -166,7 +166,7 @@ class ImportForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->moduleHandler->loadInclude('locale', 'translation.inc');
+    \Drupal::moduleHandler()->loadInclude('locale', 'translation.inc');
     // Add language, if not yet supported.
     $language = $this->languageManager->getLanguage($form_state->getValue('langcode'));
     if (empty($language)) {
@@ -185,6 +185,7 @@ class ImportForm extends FormBase {
     batch_set($batch);
 
     // Create or update all configuration translations for this language.
+    \Drupal::moduleHandler()->loadInclude('locale', 'bulk.inc');
     if ($batch = locale_config_batch_update_components($options, [$form_state->getValue('langcode')])) {
       batch_set($batch);
     }

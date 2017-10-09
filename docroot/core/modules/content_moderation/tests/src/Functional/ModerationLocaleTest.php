@@ -53,9 +53,8 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $edit = [
       'title[0][value]' => 'Published English node',
       'langcode[0][value]' => 'en',
-      'moderation_state[0][state]' => 'published',
     ];
-    $this->drupalPostForm('node/add/article', $edit, t('Save'));
+    $this->drupalPostForm('node/add/article', $edit, t('Save and Publish'));
     $this->assertText(t('Article Published English node has been created.'));
     $english_node = $this->drupalGetNodeByTitle('Published English node');
 
@@ -64,9 +63,8 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $this->clickLink(t('Add'));
     $edit = [
       'title[0][value]' => 'French node Draft',
-      'moderation_state[0][state]' => 'draft',
     ];
-    $this->drupalPostForm(NULL, $edit, t('Save (this translation)'));
+    $this->drupalPostForm(NULL, $edit, t('Save and Create New Draft (this translation)'));
     // Here the error has occurred "The website encountered an unexpected error.
     // Please try again later."
     // If the translation has got lost.
@@ -76,9 +74,8 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $edit = [
       'title[0][value]' => 'English node',
       'langcode[0][value]' => 'en',
-      'moderation_state[0][state]' => 'draft',
     ];
-    $this->drupalPostForm('node/add/article', $edit, t('Save'));
+    $this->drupalPostForm('node/add/article', $edit, t('Save and Create New Draft'));
     $this->assertText(t('Article English node has been created.'));
     $english_node = $this->drupalGetNodeByTitle('English node');
 
@@ -87,17 +84,14 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $this->clickLink(t('Add'));
     $edit = [
       'title[0][value]' => 'French node',
-      'moderation_state[0][state]' => 'draft',
     ];
-    $this->drupalPostForm(NULL, $edit, t('Save (this translation)'));
+    $this->drupalPostForm(NULL, $edit, t('Save and Create New Draft (this translation)'));
     $this->assertText(t('Article French node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('English node', TRUE);
 
     // Publish the English article and check that the translation stays
     // unpublished.
-    $this->drupalPostForm('node/' . $english_node->id() . '/edit', [
-      'moderation_state[0][state]' => 'published',
-    ], t('Save (this translation)'));
+    $this->drupalPostForm('node/' . $english_node->id() . '/edit', [], t('Save and Publish (this translation)'));
     $this->assertText(t('Article English node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('English node', TRUE);
     $french_node = $english_node->getTranslation('fr');
@@ -112,9 +106,8 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     // the translation first.
     $edit = [
       'title[0][value]' => 'Another node',
-      'moderation_state[0][state]' => 'draft',
     ];
-    $this->drupalPostForm('node/add/article', $edit, t('Save'));
+    $this->drupalPostForm('node/add/article', $edit, t('Save and Create New Draft'));
     $this->assertText(t('Article Another node has been created.'));
     $english_node = $this->drupalGetNodeByTitle('Another node');
 
@@ -123,17 +116,14 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $this->clickLink(t('Add'));
     $edit = [
       'title[0][value]' => 'Translated node',
-      'moderation_state[0][state]' => 'draft',
     ];
-    $this->drupalPostForm(NULL, $edit, t('Save (this translation)'));
+    $this->drupalPostForm(NULL, $edit, t('Save and Create New Draft (this translation)'));
     $this->assertText(t('Article Translated node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('Another node', TRUE);
 
     // Publish the translation and check that the source language version stays
     // unpublished.
-    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', [
-      'moderation_state[0][state]' => 'published',
-    ], t('Save (this translation)'));
+    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', [], t('Save and Publish (this translation)'));
     $this->assertText(t('Article Translated node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('Another node', TRUE);
     $french_node = $english_node->getTranslation('fr');
@@ -145,9 +135,8 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     // Now check that we can create a new draft of the translation.
     $edit = [
       'title[0][value]' => 'New draft of translated node',
-      'moderation_state[0][state]' => 'draft',
     ];
-    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', $edit, t('Save (this translation)'));
+    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', $edit, t('Save and Create New Draft (this translation)'));
     $this->assertText(t('Article New draft of translated node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('Another node', TRUE);
     $french_node = $english_node->getTranslation('fr');
@@ -155,11 +144,12 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $this->assertTrue($french_node->isPublished());
     $this->assertEqual($french_node->getTitle(), 'Translated node', 'The default revision of the published translation remains the same.');
 
-    // Publish the French article before testing the archive transition.
-    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', [
-      'moderation_state[0][state]' => 'published',
-    ], t('Save (this translation)'));
-    $this->assertText(t('Article New draft of translated node has been updated.'));
+    // Publish the draft.
+    $edit = [
+      'new_state' => 'published',
+    ];
+    $this->drupalPostForm('fr/node/' . $english_node->id() . '/latest', $edit, t('Apply'));
+    $this->assertText(t('The moderation state has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('Another node', TRUE);
     $french_node = $english_node->getTranslation('fr');
     $this->assertEqual($french_node->moderation_state->value, 'published');
@@ -167,21 +157,15 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $this->assertEqual($french_node->getTitle(), 'New draft of translated node', 'The draft has replaced the published revision.');
 
     // Publish the English article before testing the archive transition.
-    $this->drupalPostForm('node/' . $english_node->id() . '/edit', [
-      'moderation_state[0][state]' => 'published',
-    ], t('Save (this translation)'));
+    $this->drupalPostForm('node/' . $english_node->id() . '/edit', [], t('Save and Publish (this translation)'));
     $this->assertText(t('Article Another node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('Another node', TRUE);
     $this->assertEqual($english_node->moderation_state->value, 'published');
 
     // Archive the node and its translation.
-    $this->drupalPostForm('node/' . $english_node->id() . '/edit', [
-      'moderation_state[0][state]' => 'archived',
-    ], t('Save (this translation)'));
+    $this->drupalPostForm('node/' . $english_node->id() . '/edit', [], t('Save and Archive (this translation)'));
     $this->assertText(t('Article Another node has been updated.'));
-    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', [
-      'moderation_state[0][state]' => 'archived',
-    ], t('Save (this translation)'));
+    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', [], t('Save and Archive (this translation)'));
     $this->assertText(t('Article New draft of translated node has been updated.'));
     $english_node = $this->drupalGetNodeByTitle('Another node', TRUE);
     $french_node = $english_node->getTranslation('fr');
@@ -189,6 +173,43 @@ class ModerationLocaleTest extends ModerationStateTestBase {
     $this->assertFalse($english_node->isPublished());
     $this->assertEqual($french_node->moderation_state->value, 'archived');
     $this->assertFalse($french_node->isPublished());
+
+    // Create another article with its translation. This time publishing english
+    // after creating a forward french revision.
+    $edit = [
+      'title[0][value]' => 'An english node',
+    ];
+    $this->drupalPostForm('node/add/article', $edit, t('Save and Create New Draft'));
+    $this->assertText(t('Article An english node has been created.'));
+    $english_node = $this->drupalGetNodeByTitle('An english node');
+    $this->assertFalse($english_node->isPublished());
+
+    // Add a French translation.
+    $this->drupalGet('node/' . $english_node->id() . '/translations');
+    $this->clickLink(t('Add'));
+    $edit = [
+      'title[0][value]' => 'A french node',
+    ];
+    $this->drupalPostForm(NULL, $edit, t('Save and Publish (this translation)'));
+    $english_node = $this->drupalGetNodeByTitle('An english node', TRUE);
+    $french_node = $english_node->getTranslation('fr');
+    $this->assertTrue($french_node->isPublished());
+    $this->assertFalse($english_node->isPublished());
+
+    // Create a forward revision
+    $this->drupalPostForm('fr/node/' . $english_node->id() . '/edit', [], t('Save and Create New Draft (this translation)'));
+    $english_node = $this->drupalGetNodeByTitle('An english node', TRUE);
+    $french_node = $english_node->getTranslation('fr');
+    $this->assertTrue($french_node->isPublished());
+    $this->assertFalse($english_node->isPublished());
+
+    // Publish the english node and the default french node not the latest
+    // french node should be used.
+    $this->drupalPostForm('/node/' . $english_node->id() . '/edit', [], t('Save and Publish (this translation)'));
+    $english_node = $this->drupalGetNodeByTitle('An english node', TRUE);
+    $french_node = $english_node->getTranslation('fr');
+    $this->assertTrue($french_node->isPublished());
+    $this->assertTrue($english_node->isPublished());
   }
 
 }

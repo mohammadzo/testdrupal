@@ -194,8 +194,6 @@ class MatcherDumper implements MatcherDumperInterface {
    *
    * @return array
    *   The schema API definition for the SQL storage table.
-   *
-   * @internal
    */
   protected function schemaDefinition() {
     $schema = [

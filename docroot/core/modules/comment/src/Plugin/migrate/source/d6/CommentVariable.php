@@ -7,8 +7,7 @@ use Drupal\migrate\Plugin\migrate\source\DummyQueryTrait;
 
 /**
  * @MigrateSource(
- *   id = "d6_comment_variable",
- *   source_module = "comment"
+ *   id = "d6_comment_variable"
  * )
  */
 class CommentVariable extends DrupalSqlBase {

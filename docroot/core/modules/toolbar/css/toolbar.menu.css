@@ -13,24 +13,9 @@
   position: relative;
   width: auto;
 }
-
-/**
- * Hidden vertical toolbar sub-menus by default.
- */
+.toolbar .toolbar-tray-horizontal .toolbar-menu .toolbar-handle,
+.toolbar .toolbar-tray-horizontal .toolbar-menu ul,
 .toolbar .toolbar-tray-vertical .toolbar-menu ul {
-  display: none;
-}
-
-/**
- * Hidden horizontal toolbar handle icon.
- */
-.toolbar .toolbar-tray-horizontal .toolbar-menu .toolbar-handle {
-  display: none;
-}
-/**
- * Hidden toolbar sub-menus by default.
- */
-.toolbar-tray-open .toolbar-menu .menu-item--expanded ul {
   display: none;
 }
 .toolbar .toolbar-tray-vertical li.open > ul {

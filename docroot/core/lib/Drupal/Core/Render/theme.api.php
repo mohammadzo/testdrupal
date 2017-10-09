@@ -728,7 +728,7 @@ function hook_themes_installed($theme_list) {
 /**
  * Respond to themes being uninstalled.
  *
- * @param array $themes
+ * @param array $theme_list
  *   Array containing the names of the themes being uninstalled.
  *
  * @see \Drupal\Core\Extension\ThemeHandler::uninstall()

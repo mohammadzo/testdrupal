@@ -129,16 +129,14 @@ class UserPermissionsForm extends FormBase {
 
     foreach ($permissions_by_provider as $provider => $permissions) {
       // Module name.
-      $form['permissions'][$provider] = [
-        [
-          '#wrapper_attributes' => [
-            'colspan' => count($role_names) + 1,
-            'class' => ['module'],
-            'id' => 'module-' . $provider,
-          ],
-          '#markup' => $this->moduleHandler->getName($provider),
+      $form['permissions'][$provider] = [[
+        '#wrapper_attributes' => [
+          'colspan' => count($role_names) + 1,
+          'class' => ['module'],
+          'id' => 'module-' . $provider,
         ],
-      ];
+        '#markup' => $this->moduleHandler->getName($provider),
+      ]];
       foreach ($permissions as $perm => $perm_item) {
         // Fill in default values for the permission.
         $perm_item += [

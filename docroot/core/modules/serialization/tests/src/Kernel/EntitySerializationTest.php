@@ -4,7 +4,6 @@ namespace Drupal\Tests\serialization\Kernel;
 
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\entity_test\Entity\EntityTestMulRev;
-use Drupal\Tests\rest\Functional\BcTimestampNormalizerUnixTestTrait;
 
 /**
  * Tests that entities can be serialized to supported core formats.
@@ -12,8 +11,6 @@ use Drupal\Tests\rest\Functional\BcTimestampNormalizerUnixTestTrait;
  * @group serialization
  */
 class EntitySerializationTest extends NormalizerTestBase {
-
-  use BcTimestampNormalizerUnixTestTrait;
 
   /**
    * Modules to install.
@@ -109,7 +106,7 @@ class EntitySerializationTest extends NormalizerTestBase {
         ['value' => 'entity_test_mulrev'],
       ],
       'created' => [
-        $this->formatExpectedTimestampItemValues($this->entity->created->value),
+        ['value' => $this->entity->created->value],
       ],
       'user_id' => [
         [
@@ -124,9 +121,6 @@ class EntitySerializationTest extends NormalizerTestBase {
         ['value' => 1],
       ],
       'default_langcode' => [
-        ['value' => TRUE],
-      ],
-      'revision_translation_affected' => [
         ['value' => TRUE],
       ],
       'non_rev_field' => [],
@@ -188,19 +182,16 @@ class EntitySerializationTest extends NormalizerTestBase {
 
     // Generate the expected xml in a way that allows changes to entity property
     // order.
-    $expected_created = $this->formatExpectedTimestampItemValues($this->entity->created->value);
-
     $expected = [
       'id' => '<id><value>' . $this->entity->id() . '</value></id>',
       'uuid' => '<uuid><value>' . $this->entity->uuid() . '</value></uuid>',
       'langcode' => '<langcode><value>en</value></langcode>',
       'name' => '<name><value>' . $this->values['name'] . '</value></name>',
       'type' => '<type><value>entity_test_mulrev</value></type>',
-      'created' => '<created><value>' . $expected_created['value'] . '</value><format>' . $expected_created['format'] . '</format></created>',
+      'created' => '<created><value>' . $this->entity->created->value . '</value></created>',
       'user_id' => '<user_id><target_id>' . $this->user->id() . '</target_id><target_type>' . $this->user->getEntityTypeId() . '</target_type><target_uuid>' . $this->user->uuid() . '</target_uuid><url>' . $this->user->url() . '</url></user_id>',
       'revision_id' => '<revision_id><value>' . $this->entity->getRevisionId() . '</value></revision_id>',
       'default_langcode' => '<default_langcode><value>1</value></default_langcode>',
-      'revision_translation_affected' => '<revision_translation_affected><value>1</value></revision_translation_affected>',
       'non_rev_field' => '<non_rev_field/>',
       'field_test_text' => '<field_test_text><value>' . $this->values['field_test_text']['value'] . '</value><format>' . $this->values['field_test_text']['format'] . '</format></field_test_text>',
     ];

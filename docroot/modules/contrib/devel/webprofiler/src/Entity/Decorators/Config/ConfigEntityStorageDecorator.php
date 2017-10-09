@@ -111,13 +111,6 @@ class ConfigEntityStorageDecorator extends EntityDecorator implements ConfigEnti
   /**
    * {@inheritdoc}
    */
-  public function hasData() {
-    return $this->getOriginalObject()->hasData();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getQuery($conjunction = 'AND') {
     return $this->getOriginalObject()->getQuery($conjunction);
   }

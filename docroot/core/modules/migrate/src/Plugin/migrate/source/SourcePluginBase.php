@@ -177,7 +177,7 @@ abstract class SourcePluginBase extends PluginBase implements MigrateSourceInter
    * @return array
    *   An array of the data for this source.
    */
-  abstract protected function initializeIterator();
+  protected abstract function initializeIterator();
 
   /**
    * Gets the module handler.
@@ -539,19 +539,6 @@ abstract class SourcePluginBase extends PluginBase implements MigrateSourceInter
   public function postRollback(MigrateRollbackEvent $event) {
     // Reset the high-water mark.
     $this->saveHighWater(NULL);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getSourceModule() {
-    if (!empty($this->configuration['source_module'])) {
-      return $this->configuration['source_module'];
-    }
-    elseif (!empty($this->pluginDefinition['source_module'])) {
-      return $this->pluginDefinition['source_module'];
-    }
-    return NULL;
   }
 
 }

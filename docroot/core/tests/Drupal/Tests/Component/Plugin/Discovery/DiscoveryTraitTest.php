@@ -3,13 +3,13 @@
 namespace Drupal\Tests\Component\Plugin\Discovery;
 
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @group Plugin
  * @coversDefaultClass \Drupal\Component\Plugin\Discovery\DiscoveryTrait
  */
-class DiscoveryTraitTest extends TestCase {
+class DiscoveryTraitTest extends UnitTestCase {
 
   /**
    * Data provider for testDoGetDefinition().

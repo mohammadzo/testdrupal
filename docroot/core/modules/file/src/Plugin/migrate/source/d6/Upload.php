@@ -10,7 +10,7 @@ use Drupal\migrate_drupal\Plugin\migrate\source\DrupalSqlBase;
  *
  * @MigrateSource(
  *   id = "d6_upload",
- *   source_module = "upload"
+ *   source_provider = "upload"
  * )
  */
 class Upload extends DrupalSqlBase {

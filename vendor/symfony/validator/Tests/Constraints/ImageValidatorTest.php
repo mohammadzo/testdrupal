@@ -13,12 +13,12 @@ namespace Symfony\Component\Validator\Tests\Constraints;
 
 use Symfony\Component\Validator\Constraints\Image;
 use Symfony\Component\Validator\Constraints\ImageValidator;
-use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
+use Symfony\Component\Validator\Validation;
 
 /**
  * @requires extension fileinfo
  */
-class ImageValidatorTest extends ConstraintValidatorTestCase
+class ImageValidatorTest extends AbstractConstraintValidatorTest
 {
     protected $context;
 
@@ -32,7 +32,11 @@ class ImageValidatorTest extends ConstraintValidatorTestCase
     protected $imageLandscape;
     protected $imagePortrait;
     protected $image4By3;
-    protected $imageCorrupted;
+
+    protected function getApiVersion()
+    {
+        return Validation::API_VERSION_2_5;
+    }
 
     protected function createValidator()
     {
@@ -47,7 +51,6 @@ class ImageValidatorTest extends ConstraintValidatorTestCase
         $this->imageLandscape = __DIR__.'/Fixtures/test_landscape.gif';
         $this->imagePortrait = __DIR__.'/Fixtures/test_portrait.gif';
         $this->image4By3 = __DIR__.'/Fixtures/test_4by3.gif';
-        $this->imageCorrupted = __DIR__.'/Fixtures/test_corrupted.gif';
     }
 
     public function testNullIsValid()
@@ -324,28 +327,6 @@ class ImageValidatorTest extends ConstraintValidatorTestCase
             ->setParameter('{{ width }}', 1)
             ->setParameter('{{ height }}', 2)
             ->setCode(Image::PORTRAIT_NOT_ALLOWED_ERROR)
-            ->assertRaised();
-    }
-
-    public function testCorrupted()
-    {
-        if (!function_exists('imagecreatefromstring')) {
-            $this->markTestSkipped('This test require GD extension');
-        }
-
-        $constraint = new Image(array(
-            'detectCorrupted' => true,
-            'corruptedMessage' => 'myMessage',
-        ));
-
-        $this->validator->validate($this->image, $constraint);
-
-        $this->assertNoViolation();
-
-        $this->validator->validate($this->imageCorrupted, $constraint);
-
-        $this->buildViolation('myMessage')
-            ->setCode(Image::CORRUPTED_IMAGE_ERROR)
             ->assertRaised();
     }
 }

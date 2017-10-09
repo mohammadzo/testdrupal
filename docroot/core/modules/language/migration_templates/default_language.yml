@@ -7,7 +7,6 @@ source:
   plugin: variable
   variables:
     - language_default
-  source_module: locale
 process:
   default_langcode:
     -

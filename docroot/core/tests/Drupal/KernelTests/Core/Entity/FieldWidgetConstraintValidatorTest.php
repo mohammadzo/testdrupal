@@ -149,10 +149,6 @@ class FieldWidgetConstraintValidatorTest extends KernelTestBase {
 
     $errors = $this->getErrorsForEntity($entity);
     $this->assertEqual($errors[''], 'Entity level validation');
-
-    $entity->name->value = 'entity-level-violation-with-path';
-    $errors = $this->getErrorsForEntity($entity);
-    $this->assertEqual($errors['test][form][element'], 'Entity level validation');
   }
 
 }

@@ -205,9 +205,9 @@ class Inspector {
    * @return bool
    *   TRUE if $traversable can be traversed and all members have all keys.
    */
-  public static function assertAllHaveKey($traversable) {
+  public static function assertAllHaveKey() {
     $args = func_get_args();
-    unset($args[0]);
+    $traversable = array_shift($args);
 
     if (static::assertTraversable($traversable)) {
       foreach ($traversable as $member) {
@@ -396,9 +396,9 @@ class Inspector {
    *   TRUE if $traversable can be traversed and all members are objects with
    *   at least one of the listed classes or interfaces.
    */
-  public static function assertAllObjects($traversable) {
+  public static function assertAllObjects() {
     $args = func_get_args();
-    unset($args[0]);
+    $traversable = array_shift($args);
 
     if (static::assertTraversable($traversable)) {
       foreach ($traversable as $member) {

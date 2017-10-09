@@ -222,16 +222,15 @@ class MigrationLookup extends ProcessPluginBase implements ContainerFactoryPlugi
       // Do a normal migration with the stub row.
       $migrate_executable->processRow($stub_row, $process);
       $destination_ids = [];
-      $id_map = $migration->getIdMap();
       try {
         $destination_ids = $destination_plugin->import($stub_row);
       }
       catch (\Exception $e) {
-        $id_map->saveMessage($stub_row->getSourceIdValues(), $e->getMessage());
+        $migration->getIdMap()->saveMessage($stub_row->getSourceIdValues(), $e->getMessage());
       }
 
       if ($destination_ids) {
-        $id_map->saveIdMapping($stub_row, $destination_ids, MigrateIdMapInterface::STATUS_NEEDS_UPDATE);
+        $migration->getIdMap()->saveIdMapping($stub_row, $destination_ids, MigrateIdMapInterface::STATUS_NEEDS_UPDATE);
       }
     }
     if ($destination_ids) {

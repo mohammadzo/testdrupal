@@ -7,7 +7,6 @@ source:
   plugin: variable
   variables:
     - image_jpeg_quality
-  source_module: system
 process:
   jpeg_quality: image_jpeg_quality
 destination:

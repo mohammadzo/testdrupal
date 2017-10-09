@@ -4,6 +4,5 @@ description: 'Allow administrators to place blocks from any Drupal page'
 package: Core (Experimental)
 version: VERSION
 core: 8.x
-hidden: true
 dependencies:
   - block

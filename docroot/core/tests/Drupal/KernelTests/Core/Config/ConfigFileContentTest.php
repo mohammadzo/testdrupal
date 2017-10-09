@@ -210,22 +210,22 @@ class ConfigFileContentTest extends KernelTestBase {
     $config_parsed = $filestorage->read($name);
 
     $key = 'numeric keys';
-    $this->assertSame($config_data[$key], $config_parsed[$key]);
+    $this->assertIdentical($config_data[$key], $config_parsed[$key]);
 
     $key = 'nested keys';
-    $this->assertSame($config_data[$key], $config_parsed[$key]);
+    $this->assertIdentical($config_data[$key], $config_parsed[$key]);
 
     $key = 'HTML';
-    $this->assertSame($config_data['nested keys'][$key], $config_parsed['nested keys'][$key]);
+    $this->assertIdentical($config_data['nested keys'][$key], $config_parsed['nested keys'][$key]);
 
     $key = 'UTF-8';
-    $this->assertSame($config_data['nested keys'][$key], $config_parsed['nested keys'][$key]);
+    $this->assertIdentical($config_data['nested keys'][$key], $config_parsed['nested keys'][$key]);
 
     $key = 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΣὨ';
-    $this->assertSame($config_data['nested keys'][$key], $config_parsed['nested keys'][$key]);
+    $this->assertIdentical($config_data['nested keys'][$key], $config_parsed['nested keys'][$key]);
 
     $key = 'invalid xml';
-    $this->assertSame($config_data[$key], $config_parsed[$key]);
+    $this->assertIdentical($config_data[$key], $config_parsed[$key]);
   }
 
 }

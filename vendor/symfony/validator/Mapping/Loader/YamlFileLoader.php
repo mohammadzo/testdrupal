@@ -42,7 +42,19 @@ class YamlFileLoader extends FileLoader
     public function loadClassMetadata(ClassMetadata $metadata)
     {
         if (null === $this->classes) {
-            $this->loadClassesFromYaml();
+            if (null === $this->yamlParser) {
+                $this->yamlParser = new YamlParser();
+            }
+
+            $this->classes = $this->parseFile($this->file);
+
+            if (isset($this->classes['namespaces'])) {
+                foreach ($this->classes['namespaces'] as $alias => $namespace) {
+                    $this->addNamespaceAlias($alias, $namespace);
+                }
+
+                unset($this->classes['namespaces']);
+            }
         }
 
         if (isset($this->classes[$metadata->getClassName()])) {
@@ -54,20 +66,6 @@ class YamlFileLoader extends FileLoader
         }
 
         return false;
-    }
-
-    /**
-     * Return the names of the classes mapped in this file.
-     *
-     * @return string[] The classes names
-     */
-    public function getMappedClasses()
-    {
-        if (null === $this->classes) {
-            $this->loadClassesFromYaml();
-        }
-
-        return array_keys($this->classes);
     }
 
     /**
@@ -133,23 +131,12 @@ class YamlFileLoader extends FileLoader
         return $classes;
     }
 
-    private function loadClassesFromYaml()
-    {
-        if (null === $this->yamlParser) {
-            $this->yamlParser = new YamlParser();
-        }
-
-        $this->classes = $this->parseFile($this->file);
-
-        if (isset($this->classes['namespaces'])) {
-            foreach ($this->classes['namespaces'] as $alias => $namespace) {
-                $this->addNamespaceAlias($alias, $namespace);
-            }
-
-            unset($this->classes['namespaces']);
-        }
-    }
-
+    /**
+     * Loads the validation metadata from the given YAML class description.
+     *
+     * @param ClassMetadata $metadata         The metadata to load
+     * @param array         $classDescription The YAML class description
+     */
     private function loadClassMetadataFromYaml(ClassMetadata $metadata, array $classDescription)
     {
         if (isset($classDescription['group_sequence_provider'])) {

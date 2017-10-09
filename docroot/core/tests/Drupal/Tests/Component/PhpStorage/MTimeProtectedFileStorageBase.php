@@ -3,7 +3,6 @@
 namespace Drupal\Tests\Component\PhpStorage;
 
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\Random;
 
 /**
  * Base test class for MTime protected storage.
@@ -37,10 +36,7 @@ abstract class MTimeProtectedFileStorageBase extends PhpStorageTestBase {
   protected function setUp() {
     parent::setUp();
 
-    // Random generator.
-    $random = new Random();
-
-    $this->secret = $random->name(8, TRUE);
+    $this->secret = $this->randomMachineName();
 
     $this->settings = [
       'directory' => $this->directory,

@@ -3,6 +3,7 @@
 namespace Drupal\migrate_field_plugin_manager_test\Plugin\migrate\field;
 
 use Drupal\migrate_drupal\Plugin\migrate\field\FieldPluginBase;
+use Drupal\migrate\Plugin\MigrationInterface;
 
 /**
  * @MigrateField(
@@ -13,4 +14,18 @@ use Drupal\migrate_drupal\Plugin\migrate\field\FieldPluginBase;
  *   }
  * )
  */
-class D6FileField extends FieldPluginBase {}
+class D6FileField extends FieldPluginBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFieldFormatterMap() {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function processFieldValues(MigrationInterface $migration, $field_name, $data) {}
+
+}

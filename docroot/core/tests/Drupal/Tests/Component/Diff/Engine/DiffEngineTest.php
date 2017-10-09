@@ -7,7 +7,6 @@ use Drupal\Component\Diff\Engine\DiffOpAdd;
 use Drupal\Component\Diff\Engine\DiffOpCopy;
 use Drupal\Component\Diff\Engine\DiffOpChange;
 use Drupal\Component\Diff\Engine\DiffOpDelete;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Test DiffEngine class.
@@ -16,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @group Diff
  */
-class DiffEngineTest extends TestCase {
+class DiffEngineTest extends \PHPUnit_Framework_TestCase {
 
   /**
    * @return array

@@ -29,14 +29,12 @@ class NodeViewBuilder extends EntityViewBuilder {
 
       if ($display->getComponent('links')) {
         $build[$id]['links'] = [
-          '#lazy_builder' => [
-            get_called_class() . '::renderLinks', [
-              $entity->id(),
-              $view_mode,
-              $entity->language()->getId(),
-              !empty($entity->in_preview),
-            ],
-          ],
+          '#lazy_builder' => [get_called_class() . '::renderLinks', [
+            $entity->id(),
+            $view_mode,
+            $entity->language()->getId(),
+            !empty($entity->in_preview),
+          ]],
         ];
       }
 

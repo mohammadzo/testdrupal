@@ -1,13 +1,14 @@
 <?php
 
 namespace Unish;
+use Drush\Commands\core\XhprofCommands;
 
 /**
  * Unit tests for xh.drush.inc.
  *
  * @group base
  */
-class xhUnitCase extends UnitUnishTestCase {
+class xhUnitCase extends \PHPUnit_Framework_TestCase {
 
   /**
    * Test various combinations of XHProf flag options.
@@ -15,11 +16,7 @@ class xhUnitCase extends UnitUnishTestCase {
    * @dataProvider xhOptionProvider
    */
   public function testFlags($name, $options, $expected) {
-    drush_preflight();
-    foreach ($options as $option_name => $option_value) {
-      drush_set_option($option_name, $option_value);
-    }
-    $this->assertEquals($expected, xh_flags(), $name);
+    $this->assertEquals($expected, XhprofCommands::xhprofFlags($options), $name);
   }
 
   /**
@@ -34,11 +31,6 @@ class xhUnitCase extends UnitUnishTestCase {
     }
 
     return array(
-      array(
-        'name' => 'No flag options provided (default)',
-        'options' => array(),
-        'expected' => 0,
-      ),
       array(
         'name' => 'Default flag options explicitly provided',
         'options' => array(

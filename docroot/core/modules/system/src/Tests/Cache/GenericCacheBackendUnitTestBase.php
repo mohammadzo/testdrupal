@@ -69,7 +69,7 @@ abstract class GenericCacheBackendUnitTestBase extends KernelTestBase {
    * @return \Drupal\Core\Cache\CacheBackendInterface
    *   Cache backend to test.
    */
-  abstract protected function createCacheBackend($bin);
+  protected abstract function createCacheBackend($bin);
 
   /**
    * Allows specific implementation to change the environment before a test run.

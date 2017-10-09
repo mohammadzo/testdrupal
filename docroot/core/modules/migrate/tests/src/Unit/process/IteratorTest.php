@@ -31,8 +31,6 @@ class IteratorTest extends MigrateTestCase {
 
   /**
    * Tests the iterator process plugin.
-   *
-   * @group legacy
    */
   public function testIterator() {
     $migration = $this->getMigration();

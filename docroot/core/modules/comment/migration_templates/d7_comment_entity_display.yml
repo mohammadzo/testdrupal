@@ -13,14 +13,7 @@ source:
       weight: 20
 process:
   entity_type: 'constants/entity_type'
-  field_name:
-    -
-      plugin: migration_lookup
-      source: bundle
-      migration: d7_comment_type
-    -
-      plugin: skip_on_empty
-      method: row
+  field_name: bundle
   view_mode: 'constants/view_mode'
   options: 'constants/options'
   bundle: node_type

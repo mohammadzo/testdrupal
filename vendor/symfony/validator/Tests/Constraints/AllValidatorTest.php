@@ -15,10 +15,15 @@ use Symfony\Component\Validator\Constraints\All;
 use Symfony\Component\Validator\Constraints\AllValidator;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\Range;
-use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
+use Symfony\Component\Validator\Validation;
 
-class AllValidatorTest extends ConstraintValidatorTestCase
+class AllValidatorTest extends AbstractConstraintValidatorTest
 {
+    protected function getApiVersion()
+    {
+        return Validation::API_VERSION_2_5;
+    }
+
     protected function createValidator()
     {
         return new AllValidator();

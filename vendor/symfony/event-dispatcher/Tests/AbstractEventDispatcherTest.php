@@ -138,6 +138,16 @@ abstract class AbstractEventDispatcherTest extends TestCase
         $this->assertSame($event, $return);
     }
 
+    /**
+     * @group legacy
+     */
+    public function testLegacyDispatch()
+    {
+        $event = new Event();
+        $this->dispatcher->dispatch(self::preFoo, $event);
+        $this->assertEquals('pre.foo', $event->getName());
+    }
+
     public function testDispatchForClosure()
     {
         $invoked = 0;
@@ -253,6 +263,19 @@ abstract class AbstractEventDispatcherTest extends TestCase
         $this->assertCount(2, $this->dispatcher->getListeners(self::preFoo));
         $this->dispatcher->removeSubscriber($eventSubscriber);
         $this->assertFalse($this->dispatcher->hasListeners(self::preFoo));
+    }
+
+    /**
+     * @group legacy
+     */
+    public function testLegacyEventReceivesTheDispatcherInstance()
+    {
+        $dispatcher = null;
+        $this->dispatcher->addListener('test', function ($event) use (&$dispatcher) {
+            $dispatcher = $event->getDispatcher();
+        });
+        $this->dispatcher->dispatch('test');
+        $this->assertSame($this->dispatcher, $dispatcher);
     }
 
     public function testEventReceivesTheDispatcherInstanceAsArgument()

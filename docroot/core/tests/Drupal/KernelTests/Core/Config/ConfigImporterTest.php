@@ -351,7 +351,7 @@ class ConfigImporterTest extends KernelTestBase {
       $name_deletee,
       $name_other,
     ];
-    $this->assertSame($expected, $updates);
+    $this->assertIdentical($expected, $updates);
 
     // Import.
     $this->configImporter->import();

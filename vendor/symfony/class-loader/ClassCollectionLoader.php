@@ -44,7 +44,10 @@ class ClassCollectionLoader
         self::$loaded[$name] = true;
 
         if ($adaptive) {
-            $declared = array_merge(get_declared_classes(), get_declared_interfaces(), get_declared_traits());
+            $declared = array_merge(get_declared_classes(), get_declared_interfaces());
+            if (function_exists('get_declared_traits')) {
+                $declared = array_merge($declared, get_declared_traits());
+            }
 
             // don't include already declared classes
             $classes = array_diff($classes, $declared);
@@ -95,39 +98,10 @@ class ClassCollectionLoader
             return;
         }
         if (!$adaptive) {
-            $declared = array_merge(get_declared_classes(), get_declared_interfaces(), get_declared_traits());
-        }
-
-        $files = self::inline($classes, $cache, $declared);
-
-        if ($autoReload) {
-            // save the resources
-            self::writeCacheFile($metadata, serialize(array(array_values($files), $classes)));
-        }
-    }
-
-    /**
-     * Generates a file where classes and their parents are inlined.
-     *
-     * @param array  $classes  An array of classes to load
-     * @param string $cache    The file where classes are inlined
-     * @param array  $excluded An array of classes that won't be inlined
-     *
-     * @return array The source map of inlined classes, with classes as keys and files as values
-     *
-     * @throws \RuntimeException When class can't be loaded
-     */
-    public static function inline($classes, $cache, array $excluded)
-    {
-        $declared = array();
-        foreach (self::getOrderedClasses($excluded) as $class) {
-            $declared[$class->getName()] = true;
-        }
-
-        // cache the core classes
-        $cacheDir = dirname($cache);
-        if (!is_dir($cacheDir) && !@mkdir($cacheDir, 0777, true) && !is_dir($cacheDir)) {
-            throw new \RuntimeException(sprintf('Class Collection Loader was not able to create directory "%s"', $cacheDir));
+            $declared = array_merge(get_declared_classes(), get_declared_interfaces());
+            if (function_exists('get_declared_traits')) {
+                $declared = array_merge($declared, get_declared_traits());
+            }
         }
 
         $spacesRegex = '(?:\s*+(?:(?:\#|//)[^\n]*+\n|/\*(?:(?<!\*/).)++)?+)*+';
@@ -144,12 +118,11 @@ REGEX;
         $files = array();
         $content = '';
         foreach (self::getOrderedClasses($classes) as $class) {
-            if (isset($declared[$class->getName()])) {
+            if (in_array($class->getName(), $declared)) {
                 continue;
             }
-            $declared[$class->getName()] = true;
 
-            $files[$class->getName()] = $file = $class->getFileName();
+            $files[] = $file = $class->getFileName();
             $c = file_get_contents($file);
 
             if (preg_match($dontInlineRegex, $c)) {
@@ -185,7 +158,10 @@ REGEX;
         }
         self::writeCacheFile($cache, '<?php '.$content);
 
-        return $files;
+        if ($autoReload) {
+            // save the resources
+            self::writeCacheFile($metadata, serialize(array($files, $classes)));
+        }
     }
 
     /**
@@ -359,10 +335,12 @@ REGEX;
 
         $traits = array();
 
-        foreach ($classes as $c) {
-            foreach (self::resolveDependencies(self::computeTraitDeps($c), $c) as $trait) {
-                if ($trait !== $c) {
-                    $traits[] = $trait;
+        if (method_exists('ReflectionClass', 'getTraits')) {
+            foreach ($classes as $c) {
+                foreach (self::resolveDependencies(self::computeTraitDeps($c), $c) as $trait) {
+                    if ($trait !== $c) {
+                        $traits[] = $trait;
+                    }
                 }
             }
         }

@@ -11,7 +11,7 @@ process:
   name: name
   cache: cache
   filters:
-    plugin: sub_process
+    plugin: iterator
     source: filters
     key: '@id'
     process:

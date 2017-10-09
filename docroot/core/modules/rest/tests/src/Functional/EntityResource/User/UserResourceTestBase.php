@@ -3,14 +3,11 @@
 namespace Drupal\Tests\rest\Functional\EntityResource\User;
 
 use Drupal\Core\Url;
-use Drupal\Tests\rest\Functional\BcTimestampNormalizerUnixTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\EntityResourceTestBase;
 use Drupal\user\Entity\User;
 use GuzzleHttp\RequestOptions;
 
 abstract class UserResourceTestBase extends EntityResourceTestBase {
-
-  use BcTimestampNormalizerUnixTestTrait;
 
   /**
    * {@inheritdoc}
@@ -101,10 +98,14 @@ abstract class UserResourceTestBase extends EntityResourceTestBase {
         ],
       ],
       'created' => [
-        $this->formatExpectedTimestampItemValues(123456789),
+        [
+          'value' => 123456789,
+        ],
       ],
       'changed' => [
-        $this->formatExpectedTimestampItemValues($this->entity->getChangedTime()),
+        [
+          'value' => $this->entity->getChangedTime(),
+        ],
       ],
       'default_langcode' => [
         [
@@ -121,7 +122,7 @@ abstract class UserResourceTestBase extends EntityResourceTestBase {
     return [
       'name' => [
         [
-          'value' => 'Dramallama',
+          'value' => 'Dramallama ' . $this->randomMachineName(),
         ],
       ],
     ];

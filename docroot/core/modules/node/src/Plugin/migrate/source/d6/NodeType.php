@@ -9,8 +9,7 @@ use Drupal\migrate_drupal\Plugin\migrate\source\DrupalSqlBase;
  * Drupal 6 Node types source from database.
  *
  * @MigrateSource(
- *   id = "d6_node_type",
- *   source_module = "node"
+ *   id = "d6_node_type"
  * )
  */
 class NodeType extends DrupalSqlBase {

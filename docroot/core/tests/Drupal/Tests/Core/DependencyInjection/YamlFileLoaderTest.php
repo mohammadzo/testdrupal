@@ -5,14 +5,13 @@ namespace Drupal\Tests\Core\DependencyInjection;
 use Drupal\Component\FileCache\FileCacheFactory;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\YamlFileLoader;
-use Drupal\Tests\UnitTestCase;
 use org\bovigo\vfs\vfsStream;
 
 /**
  * @coversDefaultClass \Drupal\Core\DependencyInjection\YamlFileLoader
  * @group DependencyInjection
  */
-class YamlFileLoaderTest extends UnitTestCase {
+class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase {
 
   /**
    * {@inheritdoc}

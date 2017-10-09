@@ -2,15 +2,15 @@
 
 namespace Drupal\Tests\Component;
 
+use Drupal\Tests\UnitTestCase;
 use org\bovigo\vfs\vfsStream;
-use PHPUnit\Framework\TestCase;
 
 /**
  * General tests for \Drupal\Component that can't go anywhere else.
  *
  * @group Component
  */
-class DrupalComponentTest extends TestCase {
+class DrupalComponentTest extends UnitTestCase {
 
   /**
    * Tests that classes in Component do not use any Core class.

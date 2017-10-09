@@ -18,13 +18,6 @@ abstract class NormalizerBase extends SerializerAwareNormalizer implements Norma
   protected $supportedInterfaceOrClass;
 
   /**
-   * List of formats which supports (de-)normalization.
-   *
-   * @var string|string[]
-   */
-  protected $format;
-
-  /**
    * {@inheritdoc}
    */
   public function supportsNormalization($data, $format = NULL) {
@@ -78,7 +71,7 @@ abstract class NormalizerBase extends SerializerAwareNormalizer implements Norma
       return TRUE;
     }
 
-    return in_array($format, (array) $this->format, TRUE);
+    return in_array($format, (array) $this->format);
   }
 
 }

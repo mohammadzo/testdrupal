@@ -11,6 +11,7 @@
  * option in drushrc.php.
  */
 
+use Drush\Drush;
 use Drush\Log\LogLevel;
 
 /**
@@ -167,7 +168,8 @@ function _drush_cache_is_empty($bin) {
  */
 function drush_cache_get_bins() {
   $drush = array('default');
-  return array_merge(drush_command_invoke_all('drush_flush_caches'), $drush);
+  return $drush;
+  // return array_merge(drush_command_invoke_all('drush_flush_caches'), $drush);
 }
 
 /**
@@ -197,5 +199,5 @@ function drush_get_cid($prefix, $contexts = array(), $params = array()) {
     $cid[] = $param;
   }
 
-  return DRUSH_VERSION . '-' . $prefix . '-' . md5(implode("", $cid));
+  return Drush::getVersion() . '-' . $prefix . '-' . md5(implode("", $cid));
 }

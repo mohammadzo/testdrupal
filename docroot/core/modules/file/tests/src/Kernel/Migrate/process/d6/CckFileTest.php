@@ -12,7 +12,6 @@ use Drupal\Tests\migrate_drupal\Kernel\MigrateDrupalTestBase;
  * @coversDefaultClass \Drupal\file\Plugin\migrate\process\d6\CckFile
  *
  * @group file
- * @group legacy
  */
 class CckFileTest extends MigrateDrupalTestBase {
 

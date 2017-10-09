@@ -165,8 +165,4 @@ abstract class DevelGenerateBase extends PluginBase implements DevelGenerateBase
     }
     return $this->random;
   }
-
-  protected function isDrush8() {
-    return function_exists('drush_drupal_load_autoloader');
-  }
 }

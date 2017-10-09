@@ -11,16 +11,11 @@
 
 namespace Symfony\Component\Serializer\Normalizer;
 
-use Symfony\Component\Serializer\SerializerAwareInterface;
-use Symfony\Component\Serializer\SerializerAwareTrait;
-
 /**
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class CustomNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
+class CustomNormalizer extends SerializerAwareNormalizer implements NormalizerInterface, DenormalizerInterface
 {
-    use SerializerAwareTrait;
-
     /**
      * {@inheritdoc}
      */
