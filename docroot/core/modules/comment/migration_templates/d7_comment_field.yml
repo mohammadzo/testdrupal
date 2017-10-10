@@ -9,16 +9,9 @@ source:
     type: comment
 process:
   entity_type: 'constants/entity_type'
-  field_name:
-    -
-      plugin: migration_lookup
-      source: bundle
-      migration: d7_comment_type
-    -
-      plugin: skip_on_empty
-      method: row
+  field_name: bundle
   type: 'constants/type'
-  'settings/comment_type': '@field_name'
+  'settings/comment_type': bundle
 destination:
   plugin: entity:field_storage_config
 migration_dependencies:

@@ -8,13 +8,13 @@ use Drupal\Component\Plugin\Factory\DefaultFactory;
 use Drupal\plugin_test\Plugin\plugin_test\fruit\Cherry;
 use Drupal\plugin_test\Plugin\plugin_test\fruit\FruitInterface;
 use Drupal\plugin_test\Plugin\plugin_test\fruit\Kale;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\Component\Plugin\Factory\DefaultFactory
  * @group Plugin
  */
-class DefaultFactoryTest extends TestCase {
+class DefaultFactoryTest extends UnitTestCase {
 
   /**
    * Tests getPluginClass() with a valid array plugin definition.

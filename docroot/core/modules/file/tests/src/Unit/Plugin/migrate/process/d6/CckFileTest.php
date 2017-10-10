@@ -11,7 +11,6 @@ use Drupal\Tests\UnitTestCase;
 
 /**
  * @group file
- * @group legacy
  */
 class CckFileTest extends UnitTestCase {
 

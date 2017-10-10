@@ -3,12 +3,9 @@ namespace Drush\Commands\core;
 
 use Drush\Commands\DrushCommands;
 use Drush\Drush;
-use Drush\SiteAlias\SiteAliasManagerAwareInterface;
-use Drush\SiteAlias\SiteAliasManagerAwareTrait;
 
-class EditCommands extends DrushCommands implements SiteAliasManagerAwareInterface
+class EditCommands extends DrushCommands
 {
-    use SiteAliasManagerAwareTrait;
 
     /**
      * Edit drushrc, site alias, and Drupal settings.php files.
@@ -75,17 +72,15 @@ class EditCommands extends DrushCommands implements SiteAliasManagerAwareInterfa
             }
         }
 
-        if ($rcs = Drush::config()->get('runtime.config.paths')) {
-            // @todo filter out any files that are within Drush.
-            $rcs = array_combine($rcs, $rcs);
+        if ($rcs = drush_get_context_options('context-path', true)) {
             if ($headers) {
                 $rcs_header = array('drushrc' => '-- Drushrc --');
             }
         }
-
-        if ($aliases = $this->siteAliasManager()->listAllFilePaths()) {
-            sort($aliases);
-            $aliases = array_combine($aliases, $aliases);
+        // TODO: List alias files
+        $aliases = [];
+        if (!empty($aliases)) {
+            $aliases = drush_map_assoc($aliases);
             if ($headers) {
                 $aliases_header = array('aliases' => '-- Aliases --');
             }
@@ -103,8 +98,11 @@ class EditCommands extends DrushCommands implements SiteAliasManagerAwareInterfa
                 $drupal_header = array('drupal' => '-- Drupal --');
             }
         }
+        // TODO: how can we get a list of Drush commands and their paths?
+        $commands = []; // drush_get_commands();
+        ksort($commands);
 
-        return array_merge($php_header, $php, $bash_header, $bash, $rcs_header, $rcs, $aliases_header, $aliases, $drupal_header, $drupal);
+        return array_merge($php_header, $php, $bash_header, $bash, $rcs_header, $rcs, $aliases_header, $aliases, $commandfiles_header, $commandfiles, $drupal_header, $drupal);
     }
 
     public static function phpIniFiles()

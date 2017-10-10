@@ -8,7 +8,6 @@ source:
   plugin: variable
   variables:
     - menu_override_parent_selector
-  source_module: menu
 process:
   override_parent_selector: menu_override_parent_selector
 destination:

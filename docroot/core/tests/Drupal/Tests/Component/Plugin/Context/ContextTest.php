@@ -3,13 +3,13 @@
 namespace Drupal\Tests\Component\Plugin\Context;
 
 use Drupal\Component\Plugin\Context\Context;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\Component\Plugin\Context\Context
  * @group Plugin
  */
-class ContextTest extends TestCase {
+class ContextTest extends UnitTestCase {
 
   /**
    * Data provider for testGetContextValue.

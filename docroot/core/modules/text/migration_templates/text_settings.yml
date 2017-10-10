@@ -7,7 +7,6 @@ source:
   plugin: variable
   variables:
     - teaser_length
-  source_module: text
 process:
   default_summary_length: teaser_length
 destination:

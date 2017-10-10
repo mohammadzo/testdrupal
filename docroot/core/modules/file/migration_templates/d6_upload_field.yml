@@ -6,7 +6,7 @@ source:
   # We do an empty source and a proper destination to have an idmap for
   # migration_dependencies.
   plugin: md_empty
-  source_module: upload
+  provider: upload
   constants:
     entity_type: node
     type: file

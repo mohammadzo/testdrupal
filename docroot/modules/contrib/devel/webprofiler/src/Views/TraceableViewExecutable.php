@@ -31,7 +31,7 @@ class TraceableViewExecutable extends ViewExecutable {
    * @return float
    */
   public function getExecuteTime() {
-    return property_exists($this, 'execute_time') ? $this->execute_time : 0.0;
+    return $this->execute_time;
   }
 
   /**

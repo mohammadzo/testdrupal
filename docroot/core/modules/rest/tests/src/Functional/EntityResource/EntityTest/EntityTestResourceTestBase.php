@@ -3,13 +3,10 @@
 namespace Drupal\Tests\rest\Functional\EntityResource\EntityTest;
 
 use Drupal\entity_test\Entity\EntityTest;
-use Drupal\Tests\rest\Functional\BcTimestampNormalizerUnixTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\EntityResourceTestBase;
 use Drupal\user\Entity\User;
 
 abstract class EntityTestResourceTestBase extends EntityResourceTestBase {
-
-  use BcTimestampNormalizerUnixTestTrait;
 
   /**
    * {@inheritdoc}
@@ -95,7 +92,9 @@ abstract class EntityTestResourceTestBase extends EntityResourceTestBase {
         ]
       ],
       'created' => [
-        $this->formatExpectedTimestampItemValues((int) $this->entity->get('created')->value)
+        [
+          'value' => (int) $this->entity->get('created')->value,
+        ]
       ],
       'user_id' => [
         [
@@ -116,11 +115,7 @@ abstract class EntityTestResourceTestBase extends EntityResourceTestBase {
    */
   protected function getNormalizedPostEntity() {
     return [
-      'type' => [
-        [
-          'value' => 'entity_test',
-        ],
-      ],
+      'type' => 'entity_test',
       'name' => [
         [
           'value' => 'Dramallama',

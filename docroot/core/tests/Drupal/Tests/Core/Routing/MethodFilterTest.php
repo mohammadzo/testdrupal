@@ -3,7 +3,6 @@
 namespace Drupal\Tests\Core\Routing;
 
 use Drupal\Core\Routing\MethodFilter;
-use Drupal\Tests\UnitTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Route;
@@ -13,7 +12,7 @@ use Symfony\Component\Routing\RouteCollection;
  * @coversDefaultClass \Drupal\Core\Routing\MethodFilter
  * @group Routing
  */
-class MethodFilterTest extends UnitTestCase {
+class MethodFilterTest extends \PHPUnit_Framework_TestCase {
 
   /**
    * @covers ::applies

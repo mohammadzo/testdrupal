@@ -6,7 +6,6 @@ source:
   plugin: variable
   variables:
     - dblog_row_limit
-  source_module: dblog
 process:
   row_limit: dblog_row_limit
 destination:

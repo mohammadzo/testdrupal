@@ -235,7 +235,7 @@ class SimpletestResultsForm extends FormBase {
    *
    * @param array $form
    *   The form to attach the results to.
-   * @param array $results
+   * @param array $test_results
    *   The simpletest results.
    *
    * @return array

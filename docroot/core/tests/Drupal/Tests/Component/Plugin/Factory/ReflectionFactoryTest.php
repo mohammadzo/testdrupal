@@ -10,13 +10,13 @@
 namespace Drupal\Tests\Component\Plugin\Factory;
 
 use Drupal\Component\Plugin\Factory\ReflectionFactory;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @group Plugin
  * @coversDefaultClass \Drupal\Component\Plugin\Factory\ReflectionFactory
  */
-class ReflectionFactoryTest extends TestCase {
+class ReflectionFactoryTest extends UnitTestCase {
 
   /**
    * Data provider for testGetInstanceArguments.

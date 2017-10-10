@@ -117,7 +117,7 @@ class RestRegisterUserTest extends RESTTestBase {
    * @param bool $include_password
    *   Whether to include a password in the user values.
    *
-   * @return string
+   * @return string Serialized user values.
    *   Serialized user values.
    */
   protected function createSerializedUser($name, $include_password = TRUE) {

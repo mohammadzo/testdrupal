@@ -192,7 +192,7 @@ services:
       - [setContainer, ['@service_container']]
   cache.backend.database:
     class: Drupal\Core\Cache\DatabaseBackendFactory
-    arguments: ['@database', '@cache_tags.invalidator.checksum', '@settings']
+    arguments: ['@database', '@cache_tags.invalidator.checksum']
   cache.backend.apcu:
     class: Drupal\Core\Cache\ApcuBackendFactory
     arguments: ['@app.root', '@site.path', '@cache_tags.invalidator.checksum']
@@ -332,11 +332,9 @@ services:
     arguments: ['@config.storage', 'config/schema', '', true, '%install_profile%']
   config.typed:
     class: Drupal\Core\Config\TypedConfigManager
-    arguments: ['@config.storage', '@config.storage.schema', '@cache.discovery', '@module_handler', '@class_resolver']
+    arguments: ['@config.storage', '@config.storage.schema', '@cache.discovery', '@module_handler']
     tags:
       - { name: plugin_manager_cache_clear }
-    calls:
-      - [setValidationConstraintManager, ['@validation.constraint']]
   context.handler:
     class: Drupal\Core\Plugin\Context\ContextHandler
     arguments: ['@typed_data_manager']
@@ -472,9 +470,9 @@ services:
     arguments: ['@app.root', '@module_handler', '@cache.discovery']
   theme.negotiator:
     class: Drupal\Core\Theme\ThemeNegotiator
-    arguments: ['@access_check.theme', '@class_resolver']
+    arguments: ['@access_check.theme']
     tags:
-      - { name: service_id_collector, tag: theme_negotiator }
+      - { name: service_collector, tag: theme_negotiator, call: addNegotiator }
   theme.negotiator.default:
     class: Drupal\Core\Theme\DefaultNegotiator
     arguments: ['@config.factory']
@@ -1045,8 +1043,8 @@ services:
     arguments: ['@class_resolver', '@current_route_match', '%main_content_renderers%']
     tags:
       - { name: event_subscriber }
-  renderer_non_html:
-    class: Drupal\Core\EventSubscriber\RenderArrayNonHtmlSubscriber
+  accept_negotiation_406:
+    class: Drupal\Core\EventSubscriber\AcceptNegotiation406
     tags:
       - { name: event_subscriber }
   main_content_renderer.html:
@@ -1146,7 +1144,7 @@ services:
     class: Drupal\Core\Access\CsrfRequestHeaderAccessCheck
     arguments: ['@session_configuration', '@csrf_token']
     tags:
-      - { name: access_check, needs_incoming_request: TRUE }
+      - { name: access_check }
   maintenance_mode:
     class: Drupal\Core\Site\MaintenanceMode
     arguments: ['@state', '@current_user']
@@ -1233,8 +1231,8 @@ services:
     tags:
       - { name: event_subscriber }
     arguments: ['@http_kernel', '@logger.channel.php', '@redirect.destination', '@router.no_access_checks']
-  exception.final:
-    class: Drupal\Core\EventSubscriber\FinalExceptionSubscriber
+  exception.default:
+    class: Drupal\Core\EventSubscriber\DefaultExceptionSubscriber
     tags:
       - { name: event_subscriber }
     arguments: ['@config.factory']

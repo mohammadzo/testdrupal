@@ -17,7 +17,7 @@ trait SiteAliasManagerAwareTrait
     }
 
     /**
-     * @return SiteAliasManager
+     * @inheritdoc
      */
     public function siteAliasManager()
     {

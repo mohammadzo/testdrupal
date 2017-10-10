@@ -95,7 +95,7 @@ abstract class ViewTestBase extends WebTestBase {
    *
    * @param string $id
    *   The HTML ID of the button
-   * @param string $expected_label
+   * @param string $label
    *   The expected label for the button.
    * @param string $message
    *   (optional) A custom message to display with the assertion. If no custom
@@ -131,8 +131,6 @@ abstract class ViewTestBase extends WebTestBase {
 
   /**
    * Returns the schema definition.
-   *
-   * @internal
    */
   protected function schemaDefinition() {
     return ViewTestData::schemaDefinition();

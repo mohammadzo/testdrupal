@@ -3,7 +3,7 @@
 namespace Drupal\Tests\Component\Datetime;
 
 use Drupal\Component\Datetime\Time;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
-class TimeTest extends TestCase {
+class TimeTest extends UnitTestCase {
 
   /**
    * The mocked request stack.

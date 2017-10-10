@@ -344,7 +344,8 @@ class ViewAjaxControllerTest extends UnitTestCase {
     $display_handler->expects($this->never())
       ->method('setOption');
     $display_handler->expects($this->any())
-      ->method('ajaxEnabled')
+      ->method('getOption')
+      ->with('use_ajax')
       ->willReturn($use_ajax);
 
     $display_collection = $this->getMockBuilder('Drupal\views\DisplayPluginCollection')

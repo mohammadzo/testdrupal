@@ -119,11 +119,3 @@ tour-styling:
   css:
     theme:
       css/components/tour.theme.css: {}
-
-media-form:
-  version: VERSION
-  css:
-    layout:
-      css/components/media.css: {}
-  dependencies:
-    - media/form

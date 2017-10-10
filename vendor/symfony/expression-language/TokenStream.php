@@ -25,6 +25,8 @@ class TokenStream
     private $expression;
 
     /**
+     * Constructor.
+     *
      * @param array  $tokens     An array of tokens
      * @param string $expression
      */
@@ -82,7 +84,7 @@ class TokenStream
      */
     public function isEOF()
     {
-        return Token::EOF_TYPE === $this->current->type;
+        return $this->current->type === Token::EOF_TYPE;
     }
 
     /**

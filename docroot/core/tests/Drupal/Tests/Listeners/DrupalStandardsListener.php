@@ -2,26 +2,23 @@
 
 namespace Drupal\Tests\Listeners;
 
-use PHPUnit\Framework\BaseTestListener;
-use PHPUnit\Framework\TestCase;
-
 /**
  * Listens for PHPUnit tests and fails those with invalid coverage annotations.
  *
  * Enforces various coding standards within test runs.
  */
-class DrupalStandardsListener extends BaseTestListener {
+class DrupalStandardsListener extends \PHPUnit_Framework_BaseTestListener {
 
   /**
    * Signals a coding standards failure to the user.
    *
-   * @param \PHPUnit\Framework\TestCase $test
+   * @param \PHPUnit_Framework_TestCase $test
    *   The test where we should insert our test failure.
    * @param string $message
    *   The message to add to the failure notice. The test class name and test
    *   name will be appended to this message automatically.
    */
-  protected function fail(TestCase $test, $message) {
+  protected function fail(\PHPUnit_Framework_TestCase $test, $message) {
     // Add the report to the test's results.
     $message .= ': ' . get_class($test) . '::' . $test->getName();
     $fail = new \PHPUnit_Framework_AssertionFailedError($message);
@@ -47,10 +44,10 @@ class DrupalStandardsListener extends BaseTestListener {
    *
    * This method is called from $this::endTest().
    *
-   * @param \PHPUnit\Framework\TestCase $test
+   * @param \PHPUnit_Framework_TestCase $test
    *   The test to examine.
    */
-  public function checkValidCoversForTest(TestCase $test) {
+  public function checkValidCoversForTest(\PHPUnit_Framework_TestCase $test) {
     // If we're generating a coverage report already, don't do anything here.
     if ($test->getTestResultObject() && $test->getTestResultObject()->getCollectCodeCoverageInformation()) {
       return;
@@ -142,22 +139,12 @@ class DrupalStandardsListener extends BaseTestListener {
 
   /**
    * {@inheritdoc}
-   *
-   * We must mark this method as belonging to the special legacy group because
-   * it might trigger an E_USER_DEPRECATED error during coverage annotation
-   * validation. The legacy group allows symfony/phpunit-bridge to keep the
-   * deprecation notice as a warning instead of an error, which would fail the
-   * test.
-   *
-   * @group legacy
-   *
-   * @see http://symfony.com/doc/current/components/phpunit_bridge.html#mark-tests-as-legacy
    */
   public function endTest(\PHPUnit_Framework_Test $test, $time) {
     // \PHPUnit_Framework_Test does not have any useful methods of its own for
     // our purpose, so we have to distinguish between the different known
     // subclasses.
-    if ($test instanceof TestCase) {
+    if ($test instanceof \PHPUnit_Framework_TestCase) {
       $this->checkValidCoversForTest($test);
     }
     elseif ($test instanceof \PHPUnit_Framework_TestSuite) {

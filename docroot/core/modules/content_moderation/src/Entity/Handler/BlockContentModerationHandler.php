@@ -6,8 +6,6 @@ use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Customizations for block content entities.
- *
- * @internal
  */
 class BlockContentModerationHandler extends ModerationHandler {
 

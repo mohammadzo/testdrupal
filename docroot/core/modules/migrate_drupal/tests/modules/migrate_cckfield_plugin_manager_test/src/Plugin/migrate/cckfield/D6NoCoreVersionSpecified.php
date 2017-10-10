@@ -15,6 +15,11 @@ class D6NoCoreVersionSpecified extends CckFieldPluginBase {
   /**
    * {@inheritdoc}
    */
+  public function getFieldFormatterMap() {}
+
+  /**
+   * {@inheritdoc}
+   */
   public function processCckFieldValues(MigrationInterface $migration, $field_name, $data) {}
 
 }

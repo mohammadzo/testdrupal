@@ -190,10 +190,7 @@ class File extends ContentEntityBase implements FileInterface {
 
     // The file itself might not exist or be available right now.
     $uri = $this->getFileUri();
-    $size = @filesize($uri);
-
-    // Set size unless there was an error.
-    if ($size !== FALSE) {
+    if ($size = @filesize($uri)) {
       $this->setSize($size);
     }
   }

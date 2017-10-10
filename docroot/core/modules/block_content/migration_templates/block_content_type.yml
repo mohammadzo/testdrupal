@@ -12,7 +12,6 @@ source:
   ids:
     id:
       type: string
-  source_module: block
 process:
   id: id
   label: label

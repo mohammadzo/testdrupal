@@ -18,6 +18,13 @@ class NodeReference extends FieldPluginBase {
   /**
    * {@inheritdoc}
    */
+  public function getFieldFormatterMap() {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function processFieldValues(MigrationInterface $migration, $field_name, $data) {
     $process = [
       'plugin' => 'iterator',

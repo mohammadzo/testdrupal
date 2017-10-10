@@ -2,13 +2,10 @@
 
 namespace Drupal\Tests\rest\Functional\EntityResource\Feed;
 
-use Drupal\Tests\rest\Functional\BcTimestampNormalizerUnixTestTrait;
 use Drupal\Tests\rest\Functional\EntityResource\EntityTest\EntityTestResourceTestBase;
 use Drupal\aggregator\Entity\Feed;
 
 abstract class FeedResourceTestBase extends EntityTestResourceTestBase {
-
-  use BcTimestampNormalizerUnixTestTrait;
 
   /**
    * {@inheritdoc}
@@ -95,10 +92,14 @@ abstract class FeedResourceTestBase extends EntityTestResourceTestBase {
         ]
       ],
       'checked' => [
-        $this->formatExpectedTimestampItemValues(123456789),
+        [
+          'value' => 123456789
+        ]
       ],
       'queued' => [
-        $this->formatExpectedTimestampItemValues(123456789),
+        [
+          'value' => 123456789
+        ]
       ],
       'link' => [
         [
@@ -126,7 +127,9 @@ abstract class FeedResourceTestBase extends EntityTestResourceTestBase {
         ]
       ],
       'modified' => [
-        $this->formatExpectedTimestampItemValues(123456789),
+        [
+          'value' => 123456789
+        ]
       ],
     ];
   }

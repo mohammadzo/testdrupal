@@ -28,6 +28,9 @@ class EntityRevisionConverter extends EntityConverter {
    *   The entity manager, needed by the parent class.
    * @param \Drupal\content_moderation\ModerationInformationInterface $moderation_info
    *   The moderation info utility service.
+   *
+   * @todo: If the parent class is ever cleaned up to use EntityTypeManager
+   *   instead of Entity manager, this method will also need to be adjusted.
    */
   public function __construct(EntityManagerInterface $entity_manager, ModerationInformationInterface $moderation_info) {
     parent::__construct($entity_manager);
@@ -38,23 +41,23 @@ class EntityRevisionConverter extends EntityConverter {
    * {@inheritdoc}
    */
   public function applies($definition, $name, Route $route) {
-    return $this->hasPendingRevisionFlag($definition) || $this->isEditFormPage($route);
+    return $this->hasForwardRevisionFlag($definition) || $this->isEditFormPage($route);
   }
 
   /**
-   * Determines if the route definition includes a pending revision flag.
+   * Determines if the route definition includes a forward-revision flag.
    *
    * This is a custom flag defined by the Content Moderation module to load
-   * pending revisions rather than the default revision on a given route.
+   * forward revisions rather than the default revision on a given route.
    *
    * @param array $definition
    *   The parameter definition provided in the route options.
    *
    * @return bool
-   *   TRUE if the pending revision flag is set, FALSE otherwise.
+   *   TRUE if the forward revision flag is set, FALSE otherwise.
    */
-  protected function hasPendingRevisionFlag(array $definition) {
-    return (isset($definition['load_pending_revision']) && $definition['load_pending_revision']);
+  protected function hasForwardRevisionFlag(array $definition) {
+    return (isset($definition['load_forward_revision']) && $definition['load_forward_revision']);
   }
 
   /**
@@ -89,12 +92,13 @@ class EntityRevisionConverter extends EntityConverter {
       $entity_type_id = $this->getEntityTypeFromDefaults($definition, $name, $defaults);
       $latest_revision = $this->moderationInformation->getLatestRevision($entity_type_id, $value);
 
-      if ($latest_revision instanceof EntityInterface) {
-        // If the entity type is translatable, ensure we return the proper
-        // translation object for the current context.
-        if ($entity instanceof TranslatableInterface) {
-          $latest_revision = $this->entityManager->getTranslationFromContext($latest_revision, NULL, ['operation' => 'entity_upcast']);
-        }
+      // If the entity type is translatable, ensure we return the proper
+      // translation object for the current context.
+      if ($latest_revision instanceof EntityInterface && $entity instanceof TranslatableInterface) {
+        $latest_revision = $this->entityManager->getTranslationFromContext($latest_revision, NULL, ['operation' => 'entity_upcast']);
+      }
+
+      if ($latest_revision instanceof EntityInterface && $latest_revision->isRevisionTranslationAffected()) {
         $entity = $latest_revision;
       }
     }

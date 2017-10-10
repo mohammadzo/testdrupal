@@ -20,7 +20,6 @@ use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\Range;
 use Symfony\Component\Validator\Constraints\IsTrue;
-use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
 use Symfony\Component\Validator\Tests\Fixtures\ConstraintA;
@@ -69,8 +68,6 @@ class AnnotationLoaderTest extends TestCase
             'message' => 'Must be one of %choices%',
             'choices' => array('A', 'B'),
         )));
-        $expected->addPropertyConstraint('childA', new Valid());
-        $expected->addPropertyConstraint('childB', new Valid());
         $expected->addGetterConstraint('lastName', new NotNull());
         $expected->addGetterMethodConstraint('valid', 'isValid', new IsTrue());
         $expected->addGetterConstraint('permissions', new IsTrue());
@@ -141,8 +138,6 @@ class AnnotationLoaderTest extends TestCase
             'message' => 'Must be one of %choices%',
             'choices' => array('A', 'B'),
         )));
-        $expected->addPropertyConstraint('childA', new Valid());
-        $expected->addPropertyConstraint('childB', new Valid());
         $expected->addGetterConstraint('lastName', new NotNull());
         $expected->addGetterMethodConstraint('valid', 'isValid', new IsTrue());
         $expected->addGetterConstraint('permissions', new IsTrue());

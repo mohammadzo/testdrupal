@@ -5,8 +5,7 @@ namespace Drupal\Tests\Component\Utility;
 use Drupal\Component\Render\MarkupInterface;
 use Drupal\Component\Render\MarkupTrait;
 use Drupal\Component\Utility\Html;
-use Drupal\Component\Utility\Random;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * Tests \Drupal\Component\Utility\Html.
@@ -15,7 +14,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @coversDefaultClass \Drupal\Component\Utility\Html
  */
-class HtmlTest extends TestCase {
+class HtmlTest extends UnitTestCase {
 
   /**
    * {@inheritdoc}
@@ -355,14 +354,11 @@ class HtmlTest extends TestCase {
   public function providerTestTransformRootRelativeUrlsToAbsolute() {
     $data = [];
 
-    // Random generator.
-    $random = new Random();
-
     // One random tag name.
-    $tag_name = strtolower($random->name(8, TRUE));
+    $tag_name = strtolower($this->randomMachineName());
 
     // A site installed either in the root of a domain or a subdirectory.
-    $base_paths = ['/', '/subdir/' . $random->name(8, TRUE) . '/'];
+    $base_paths = ['/', '/subdir/' . $this->randomMachineName() . '/'];
 
     foreach ($base_paths as $base_path) {
       // The only attribute that has more than just a URL as its value, is

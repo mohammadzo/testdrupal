@@ -4,8 +4,7 @@ namespace Drupal\comment\Plugin\migrate\source\d6;
 
 /**
  * @MigrateSource(
- *   id = "d6_comment_variable_per_comment_type",
- *   source_module = "comment"
+ *   id = "d6_comment_variable_per_comment_type"
  * )
  */
 class CommentVariablePerCommentType extends CommentVariable {

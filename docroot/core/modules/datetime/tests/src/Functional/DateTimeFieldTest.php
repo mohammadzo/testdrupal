@@ -44,7 +44,6 @@ class DateTimeFieldTest extends DateTestBase {
     foreach (static::$timezones as $timezone) {
 
       $this->setSiteTimezone($timezone);
-      $this->assertEquals($timezone, $this->config('system.date')->get('timezone.default'), 'Time zone set to ' . $timezone);
 
       // Display creation form.
       $this->drupalGet('entity_test/add');
@@ -118,12 +117,7 @@ class DateTimeFieldTest extends DateTestBase {
               $expected_iso = format_date($date->getTimestamp(), 'custom', 'Y-m-d\TH:i:s\Z', DATETIME_STORAGE_TIMEZONE);
               $output = $this->renderTestEntity($id);
               $expected_markup = '<time datetime="' . $expected_iso . '" class="datetime">' . $expected . '</time>';
-              $this->assertContains($expected_markup, $output, new FormattableMarkup('Formatted date field using %value format displayed as %expected with %expected_iso attribute in %timezone.', [
-                '%value' => $new_value,
-                '%expected' => $expected,
-                '%expected_iso' => $expected_iso,
-                '%timezone' => $timezone,
-              ]));
+              $this->assertContains($expected_markup, $output, SafeMarkup::format('Formatted date field using %value format displayed as %expected with %expected_iso attribute.', ['%value' => $new_value, '%expected' => $expected, '%expected_iso' => $expected_iso]));
               break;
           }
         }
@@ -137,10 +131,7 @@ class DateTimeFieldTest extends DateTestBase {
         ->save();
       $expected = $date->format(DATETIME_DATE_STORAGE_FORMAT);
       $output = $this->renderTestEntity($id);
-      $this->assertContains($expected, $output, new FormattableMarkup('Formatted date field using plain format displayed as %expected in %timezone.', [
-        '%expected' => $expected,
-        '%timezone' => $timezone,
-      ]));
+      $this->assertContains($expected, $output, SafeMarkup::format('Formatted date field using plain format displayed as %expected.', ['%expected' => $expected]));
 
       // Verify that the 'datetime_custom' formatter works.
       $this->displayOptions['type'] = 'datetime_custom';
@@ -150,10 +141,7 @@ class DateTimeFieldTest extends DateTestBase {
         ->save();
       $expected = $date->format($this->displayOptions['settings']['date_format']);
       $output = $this->renderTestEntity($id);
-      $this->assertContains($expected, $output, new FormattableMarkup('Formatted date field using datetime_custom format displayed as %expected in %timezone.', [
-        '%expected' => $expected,
-        '%timezone' => $timezone,
-      ]));
+      $this->assertContains($expected, $output, SafeMarkup::format('Formatted date field using datetime_custom format displayed as %expected.', ['%expected' => $expected]));
 
       // Test that allowed markup in custom format is preserved and XSS is
       // removed.
@@ -163,10 +151,7 @@ class DateTimeFieldTest extends DateTestBase {
         ->save();
       $expected = '<strong>' . $date->format('m/d/Y') . '</strong>alert(String.fromCharCode(88,83,83))';
       $output = $this->renderTestEntity($id);
-      $this->assertContains($expected, $output, new FormattableMarkup('Formatted date field using daterange_custom format displayed as %expected in %timezone.', [
-        '%expected' => $expected,
-        '%timezone' => $timezone,
-      ]));
+      $this->assertContains($expected, $output, new FormattableMarkup('Formatted date field using daterange_custom format displayed as %expected.', ['%expected' => $expected]));
 
       // Verify that the 'datetime_time_ago' formatter works for intervals in the
       // past.  First update the test entity so that the date difference always
@@ -193,10 +178,7 @@ class DateTimeFieldTest extends DateTestBase {
         '@interval' => $this->dateFormatter->formatTimeDiffSince($timestamp, ['granularity' => $this->displayOptions['settings']['granularity']])
       ]);
       $output = $this->renderTestEntity($id);
-      $this->assertContains((string) $expected, $output, new FormattableMarkup('Formatted date field using datetime_time_ago format displayed as %expected in %timezone.', [
-        '%expected' => $expected,
-        '%timezone' => $timezone,
-      ]));
+      $this->assertContains((string) $expected, $output, SafeMarkup::format('Formatted date field using datetime_time_ago format displayed as %expected.', ['%expected' => $expected]));
 
       // Verify that the 'datetime_time_ago' formatter works for intervals in the
       // future.  First update the test entity so that the date difference always
@@ -217,10 +199,7 @@ class DateTimeFieldTest extends DateTestBase {
         '@interval' => $this->dateFormatter->formatTimeDiffUntil($timestamp, ['granularity' => $this->displayOptions['settings']['granularity']])
       ]);
       $output = $this->renderTestEntity($id);
-      $this->assertContains((string) $expected, $output, new FormattableMarkup('Formatted date field using datetime_time_ago format displayed as %expected in %timezone.', [
-        '%expected' => $expected,
-        '%timezone' => $timezone,
-      ]));
+      $this->assertContains((string) $expected, $output, SafeMarkup::format('Formatted date field using datetime_time_ago format displayed as %expected.', ['%expected' => $expected]));
     }
   }
 
@@ -229,7 +208,6 @@ class DateTimeFieldTest extends DateTestBase {
    */
   public function testDatetimeField() {
     $field_name = $this->fieldStorage->getName();
-    $field_label = $this->field->label();
     // Change the field to a datetime field.
     $this->fieldStorage->setSetting('datetime_type', 'datetime');
     $this->fieldStorage->save();
@@ -238,7 +216,7 @@ class DateTimeFieldTest extends DateTestBase {
     $this->drupalGet('entity_test/add');
     $this->assertFieldByName("{$field_name}[0][value][date]", '', 'Date element found.');
     $this->assertFieldByName("{$field_name}[0][value][time]", '', 'Time element found.');
-    $this->assertFieldByXPath('//fieldset[@id="edit-' . $field_name . '-0"]/legend', $field_label, 'Fieldset and label found');
+    $this->assertFieldByXPath('//fieldset[@id="edit-' . $field_name . '-0"]/legend', $field_name, 'Fieldset and label found');
     $this->assertFieldByXPath('//fieldset[@aria-describedby="edit-' . $field_name . '-0--description"]', NULL, 'ARIA described-by found');
     $this->assertFieldByXPath('//div[@id="edit-' . $field_name . '-0--description"]', NULL, 'ARIA description found');
 
@@ -374,7 +352,6 @@ class DateTimeFieldTest extends DateTestBase {
    */
   public function testDatelistWidget() {
     $field_name = $this->fieldStorage->getName();
-    $field_label = $this->field->label();
 
     // Ensure field is set to a date only field.
     $this->fieldStorage->setSetting('datetime_type', 'date');
@@ -393,7 +370,7 @@ class DateTimeFieldTest extends DateTestBase {
 
     // Display creation form.
     $this->drupalGet('entity_test/add');
-    $this->assertFieldByXPath('//fieldset[@id="edit-' . $field_name . '-0"]/legend', $field_label, 'Fieldset and label found');
+    $this->assertFieldByXPath('//fieldset[@id="edit-' . $field_name . '-0"]/legend', $field_name, 'Fieldset and label found');
     $this->assertFieldByXPath('//fieldset[@aria-describedby="edit-' . $field_name . '-0--description"]', NULL, 'ARIA described-by found');
     $this->assertFieldByXPath('//div[@id="edit-' . $field_name . '-0--description"]', NULL, 'ARIA description found');
 
@@ -534,7 +511,7 @@ class DateTimeFieldTest extends DateTestBase {
     \Drupal::entityManager()->clearCachedFieldDefinitions();
 
     // Test the widget for validation notifications.
-    foreach ($this->datelistDataProvider($field_label) as $data) {
+    foreach ($this->datelistDataProvider() as $data) {
       list($date_value, $expected) = $data;
 
       // Display creation form.
@@ -585,57 +562,33 @@ class DateTimeFieldTest extends DateTestBase {
   /**
    * The data provider for testing the validation of the datelist widget.
    *
-   * @param string $field_label
-   *   The label of the field being tested.
-   *
    * @return array
    *   An array of datelist input permutations to test.
    */
-  protected function datelistDataProvider($field_label) {
+  protected function datelistDataProvider() {
     return [
-      // Nothing selected.
-      [
-        ['year' => '', 'month' => '', 'day' => '', 'hour' => '', 'minute' => ''],
-        ["The $field_label date is required."],
-      ],
       // Year only selected, validation error on Month, Day, Hour, Minute.
-      [
-        ['year' => 2012, 'month' => '', 'day' => '', 'hour' => '', 'minute' => ''],
-        [
-          "The $field_label date is incomplete.",
-          'A value must be selected for month.',
-          'A value must be selected for day.',
-          'A value must be selected for hour.',
-          'A value must be selected for minute.',
-        ],
-      ],
+      [['year' => 2012, 'month' => '', 'day' => '', 'hour' => '', 'minute' => ''], [
+        'A value must be selected for month.',
+        'A value must be selected for day.',
+        'A value must be selected for hour.',
+        'A value must be selected for minute.',
+      ]],
       // Year and Month selected, validation error on Day, Hour, Minute.
-      [
-        ['year' => 2012, 'month' => '12', 'day' => '', 'hour' => '', 'minute' => ''],
-        [
-          "The $field_label date is incomplete.",
-          'A value must be selected for day.',
-          'A value must be selected for hour.',
-          'A value must be selected for minute.',
-        ],
-      ],
+      [['year' => 2012, 'month' => '12', 'day' => '', 'hour' => '', 'minute' => ''], [
+        'A value must be selected for day.',
+        'A value must be selected for hour.',
+        'A value must be selected for minute.',
+      ]],
       // Year, Month and Day selected, validation error on Hour, Minute.
-      [
-        ['year' => 2012, 'month' => '12', 'day' => '31', 'hour' => '', 'minute' => ''],
-        [
-          "The $field_label date is incomplete.",
-          'A value must be selected for hour.',
-          'A value must be selected for minute.',
-        ],
-      ],
+      [['year' => 2012, 'month' => '12', 'day' => '31', 'hour' => '', 'minute' => ''], [
+        'A value must be selected for hour.',
+        'A value must be selected for minute.',
+      ]],
       // Year, Month, Day and Hour selected, validation error on Minute only.
-      [
-        ['year' => 2012, 'month' => '12', 'day' => '31', 'hour' => '0', 'minute' => ''],
-        [
-          "The $field_label date is incomplete.",
-          'A value must be selected for minute.',
-        ],
-      ],
+      [['year' => 2012, 'month' => '12', 'day' => '31', 'hour' => '0', 'minute' => ''], [
+        'A value must be selected for minute.',
+      ]],
     ];
   }
 
@@ -667,7 +620,6 @@ class DateTimeFieldTest extends DateTestBase {
     foreach (static::$timezones as $timezone) {
 
       $this->setSiteTimezone($timezone);
-      $this->assertEquals($timezone, $this->config('system.date')->get('timezone.default'), 'Time zone set to ' . $timezone);
 
       // Set now as default_value.
       $field_edit = [

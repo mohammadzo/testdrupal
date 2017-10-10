@@ -3,13 +3,13 @@
 namespace Drupal\Tests\Component\Serialization;
 
 use Drupal\Component\Serialization\Json;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\Component\Serialization\Json
  * @group Serialization
  */
-class JsonTest extends TestCase {
+class JsonTest extends UnitTestCase {
 
   /**
    * A test string with the full ASCII table.

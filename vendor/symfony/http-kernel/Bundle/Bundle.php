@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\HttpKernel\Bundle;
 
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Console\Application;
@@ -26,12 +26,13 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
  */
 abstract class Bundle implements BundleInterface
 {
-    use ContainerAwareTrait;
-
+    /**
+     * @var ContainerInterface
+     */
+    protected $container;
     protected $name;
     protected $extension;
     protected $path;
-    private $namespace;
 
     /**
      * Boots the Bundle.
@@ -59,6 +60,16 @@ abstract class Bundle implements BundleInterface
      */
     public function build(ContainerBuilder $container)
     {
+    }
+
+    /**
+     * Sets the container.
+     *
+     * @param ContainerInterface|null $container A ContainerInterface instance or null
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
     }
 
     /**
@@ -107,11 +118,9 @@ abstract class Bundle implements BundleInterface
      */
     public function getNamespace()
     {
-        if (null === $this->namespace) {
-            $this->parseClassName();
-        }
+        $class = get_class($this);
 
-        return $this->namespace;
+        return substr($class, 0, strrpos($class, '\\'));
     }
 
     /**
@@ -145,11 +154,14 @@ abstract class Bundle implements BundleInterface
      */
     final public function getName()
     {
-        if (null === $this->name) {
-            $this->parseClassName();
+        if (null !== $this->name) {
+            return $this->name;
         }
 
-        return $this->name;
+        $name = get_class($this);
+        $pos = strrpos($name, '\\');
+
+        return $this->name = false === $pos ? $name : substr($name, $pos + 1);
     }
 
     /**
@@ -216,15 +228,6 @@ abstract class Bundle implements BundleInterface
     {
         if (class_exists($class = $this->getContainerExtensionClass())) {
             return new $class();
-        }
-    }
-
-    private function parseClassName()
-    {
-        $pos = strrpos(static::class, '\\');
-        $this->namespace = false === $pos ? '' : substr(static::class, 0, $pos);
-        if (null === $this->name) {
-            $this->name = false === $pos ? static::class : substr(static::class, $pos + 1);
         }
     }
 }

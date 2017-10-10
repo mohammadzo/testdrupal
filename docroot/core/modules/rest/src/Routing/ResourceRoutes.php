@@ -3,18 +3,16 @@
 namespace Drupal\rest\Routing;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Routing\RouteBuildEvent;
-use Drupal\Core\Routing\RoutingEvents;
+use Drupal\Core\Routing\RouteSubscriberBase;
 use Drupal\rest\Plugin\Type\ResourcePluginManager;
 use Drupal\rest\RestResourceConfigInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Subscriber for REST-style routes.
  */
-class ResourceRoutes implements EventSubscriberInterface {
+class ResourceRoutes extends RouteSubscriberBase {
 
   /**
    * The plugin manager for REST plugins.
@@ -56,18 +54,18 @@ class ResourceRoutes implements EventSubscriberInterface {
   /**
    * Alters existing routes for a specific collection.
    *
-   * @param \Drupal\Core\Routing\RouteBuildEvent $event
-   *   The route build event.
+   * @param \Symfony\Component\Routing\RouteCollection $collection
+   *   The route collection for adding routes.
    * @return array
    */
-  public function onDynamicRouteEvent(RouteBuildEvent $event) {
+  protected function alterRoutes(RouteCollection $collection) {
     // Iterate over all enabled REST resource config entities.
     /** @var \Drupal\rest\RestResourceConfigInterface[] $resource_configs */
     $resource_configs = $this->resourceConfigStorage->loadMultiple();
     foreach ($resource_configs as $resource_config) {
       if ($resource_config->status()) {
         $resource_routes = $this->getRoutesForResourceConfig($resource_config);
-        $event->getRouteCollection()->addCollection($resource_routes);
+        $collection->addCollection($resource_routes);
       }
     }
   }
@@ -131,14 +129,6 @@ class ResourceRoutes implements EventSubscriberInterface {
 
     }
     return $collection;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents() {
-    $events[RoutingEvents::DYNAMIC] = 'onDynamicRouteEvent';
-    return $events;
   }
 
 }

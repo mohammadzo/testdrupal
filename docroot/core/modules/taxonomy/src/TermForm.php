@@ -85,7 +85,7 @@ class TermForm extends ContentEntityForm {
       '#value' => $term->id(),
     ];
 
-    return parent::form($form, $form_state);
+    return parent::form($form, $form_state, $term);
   }
 
   /**

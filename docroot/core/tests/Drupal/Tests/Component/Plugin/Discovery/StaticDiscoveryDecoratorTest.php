@@ -2,13 +2,13 @@
 
 namespace Drupal\Tests\Component\Plugin\Discovery;
 
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @group Plugin
  * @coversDefaultClass \Drupal\Component\Plugin\Discovery\StaticDiscoveryDecorator
  */
-class StaticDiscoveryDecoratorTest extends TestCase {
+class StaticDiscoveryDecoratorTest extends UnitTestCase {
 
   /**
    * Helper method to provide a mocked callback object with expectations.
@@ -171,7 +171,7 @@ class StaticDiscoveryDecoratorTest extends TestCase {
 
     // Exercise getDefinitions(). It calls parent::getDefinitions() but in this
     // case there will be no side-effects.
-    $this->assertEquals(
+    $this->assertArrayEquals(
       $definitions,
       $mock_decorator->getDefinitions()
     );
@@ -220,7 +220,7 @@ class StaticDiscoveryDecoratorTest extends TestCase {
     $ref_decorated->setValue($mock_decorator, $mock_decorated);
 
     // Exercise __call.
-    $this->assertEquals(
+    $this->assertArrayEquals(
       $args,
       \call_user_func_array([$mock_decorated, $method], $args)
     );

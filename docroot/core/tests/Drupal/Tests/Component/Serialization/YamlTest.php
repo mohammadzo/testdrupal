@@ -7,13 +7,13 @@ use Drupal\Component\Serialization\SerializationInterface;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Component\Serialization\YamlPecl;
 use Drupal\Component\Serialization\YamlSymfony;
-use PHPUnit\Framework\TestCase;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * @coversDefaultClass \Drupal\Component\Serialization\Yaml
  * @group Serialization
  */
-class YamlTest extends TestCase {
+class YamlTest extends UnitTestCase {
 
   /**
    * @var \PHPUnit_Framework_MockObject_MockObject
@@ -66,7 +66,6 @@ class YamlTest extends TestCase {
    * @dataProvider providerYamlFilesInCore
    */
   public function testYamlFiles($file) {
-    file_put_contents('/tmp/dup.txt', $file . "\n", FILE_APPEND);
     $data = file_get_contents($file);
     try {
       $this->assertEquals(YamlSymfony::decode($data), YamlPecl::decode($data), $file);

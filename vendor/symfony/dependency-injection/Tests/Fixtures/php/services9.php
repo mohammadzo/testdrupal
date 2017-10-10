@@ -2,6 +2,7 @@
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\DependencyInjection\Exception\InactiveScopeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\LogicException;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
@@ -28,16 +29,12 @@ class ProjectServiceContainer extends Container
             'bar' => 'getBarService',
             'baz' => 'getBazService',
             'configurator_service' => 'getConfiguratorServiceService',
-            'configurator_service_simple' => 'getConfiguratorServiceSimpleService',
             'configured_service' => 'getConfiguredServiceService',
-            'configured_service_simple' => 'getConfiguredServiceSimpleService',
             'decorated' => 'getDecoratedService',
             'decorator_service' => 'getDecoratorServiceService',
             'decorator_service_with_name' => 'getDecoratorServiceWithNameService',
             'deprecated_service' => 'getDeprecatedServiceService',
             'factory_service' => 'getFactoryServiceService',
-            'factory_service_simple' => 'getFactoryServiceSimpleService',
-            'factory_simple' => 'getFactorySimpleService',
             'foo' => 'getFooService',
             'foo.baz' => 'getFoo_BazService',
             'foo_bar' => 'getFooBarService',
@@ -48,13 +45,6 @@ class ProjectServiceContainer extends Container
             'new_factory_service' => 'getNewFactoryServiceService',
             'request' => 'getRequestService',
             'service_from_static_method' => 'getServiceFromStaticMethodService',
-        );
-        $this->privates = array(
-            'configurator_service' => true,
-            'configurator_service_simple' => true,
-            'factory_simple' => true,
-            'inlined' => true,
-            'new_factory' => true,
         );
         $this->aliases = array(
             'alias_for_alias' => 'foo',
@@ -101,21 +91,7 @@ class ProjectServiceContainer extends Container
     {
         $this->services['configured_service'] = $instance = new \stdClass();
 
-        ${($_ = isset($this->services['configurator_service']) ? $this->services['configurator_service'] : $this->getConfiguratorServiceService()) && false ?: '_'}->configureStdClass($instance);
-
-        return $instance;
-    }
-
-    /**
-     * Gets the public 'configured_service_simple' shared service.
-     *
-     * @return \stdClass
-     */
-    protected function getConfiguredServiceSimpleService()
-    {
-        $this->services['configured_service_simple'] = $instance = new \stdClass();
-
-        ${($_ = isset($this->services['configurator_service_simple']) ? $this->services['configurator_service_simple'] : $this->getConfiguratorServiceSimpleService()) && false ?: '_'}->configureStdClass($instance);
+        $this->get('configurator_service')->configureStdClass($instance);
 
         return $instance;
     }
@@ -175,16 +151,6 @@ class ProjectServiceContainer extends Container
     }
 
     /**
-     * Gets the public 'factory_service_simple' shared service.
-     *
-     * @return \Bar
-     */
-    protected function getFactoryServiceSimpleService()
-    {
-        return $this->services['factory_service_simple'] = ${($_ = isset($this->services['factory_simple']) ? $this->services['factory_simple'] : $this->getFactorySimpleService()) && false ?: '_'}->getInstance();
-    }
-
-    /**
      * Gets the public 'foo' shared service.
      *
      * @return \Bar\FooClass
@@ -240,7 +206,7 @@ class ProjectServiceContainer extends Container
     {
         $this->services['foo_with_inline'] = $instance = new \Foo();
 
-        $instance->setBar(${($_ = isset($this->services['inlined']) ? $this->services['inlined'] : $this->getInlinedService()) && false ?: '_'});
+        $instance->setBar($this->get('inlined'));
 
         return $instance;
     }
@@ -264,7 +230,7 @@ class ProjectServiceContainer extends Container
         if ($this->has('foobaz')) {
             $instance->setBar($this->get('foobaz', ContainerInterface::NULL_ON_INVALID_REFERENCE));
         }
-        $instance->setBar(($this->get('foo')->foo() . (($this->hasParameter("foo")) ? ($this->getParameter("foo")) : ("default"))));
+        $instance->setBar(($this->get("foo")->foo() . (($this->hasParameter("foo")) ? ($this->getParameter("foo")) : ("default"))));
 
         return $instance;
     }
@@ -276,7 +242,7 @@ class ProjectServiceContainer extends Container
      */
     protected function getNewFactoryServiceService()
     {
-        $this->services['new_factory_service'] = $instance = ${($_ = isset($this->services['new_factory']) ? $this->services['new_factory'] : $this->getNewFactoryService()) && false ?: '_'}->getInstance();
+        $this->services['new_factory_service'] = $instance = $this->get('new_factory')->getInstance();
 
         $instance->foo = 'bar';
 
@@ -315,26 +281,6 @@ class ProjectServiceContainer extends Container
         $instance->setFoo($this->get('baz'));
 
         return $instance;
-    }
-
-    /**
-     * Gets the private 'configurator_service_simple' shared service.
-     *
-     * @return \ConfClass
-     */
-    protected function getConfiguratorServiceSimpleService()
-    {
-        return $this->services['configurator_service_simple'] = new \ConfClass('bar');
-    }
-
-    /**
-     * Gets the private 'factory_simple' shared service.
-     *
-     * @return \SimpleFactoryClass
-     */
-    protected function getFactorySimpleService()
-    {
-        return $this->services['factory_simple'] = new \SimpleFactoryClass('foo');
     }
 
     /**

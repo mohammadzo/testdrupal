@@ -2,8 +2,8 @@
 
 namespace Drupal\Tests\Component\Utility;
 
+use Drupal\Tests\UnitTestCase;
 use Drupal\Component\Utility\Crypt;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Tests random byte generation.
@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @coversDefaultClass \Drupal\Component\Utility\Crypt
  */
-class CryptTest extends TestCase {
+class CryptTest extends UnitTestCase {
 
   /**
    * Tests random byte generation.

@@ -59,13 +59,12 @@ class ConfigProcessor
      *
      * @return array
      */
-    public function export($referenceArray = [])
+    public function export()
     {
         if (!empty($this->unprocessedConfig)) {
             $this->processedConfig = $this->process(
                 $this->processedConfig,
-                $this->fetchUnprocessed(),
-                $referenceArray
+                $this->fetchUnprocessed()
             );
         }
         return $this->processedConfig;
@@ -109,11 +108,11 @@ class ConfigProcessor
      * @param array $toBeProcessed
      * @return array
      */
-    protected function process(array $processed, array $toBeProcessed, $referenceArray = [])
+    protected function process(array $processed, array $toBeProcessed)
     {
         $toBeReduced = array_map([$this, 'preprocess'], $toBeProcessed);
         $reduced = array_reduce($toBeReduced, [$this, 'reduceOne'], $processed);
-        return $this->evaluate($reduced, $referenceArray);
+        return $this->evaluate($reduced);
     }
 
     /**
@@ -150,11 +149,11 @@ class ConfigProcessor
      * @param array $config
      * @return array
      */
-    protected function evaluate(array $config, $referenceArray = [])
+    protected function evaluate(array $config)
     {
         return Expander::expandArrayProperties(
             $config,
-            $referenceArray
+            []
         );
     }
 
