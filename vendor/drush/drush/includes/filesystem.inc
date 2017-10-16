@@ -4,8 +4,6 @@
  * @file
  * Filesystem utilities.
  */
-use Drush\Drush;
-use Drush\Sql\SqlBase;
 use Webmozart\PathUtil\Path;
 
 /**
@@ -65,6 +63,47 @@ function drush_correct_absolute_path_for_exec($path, $os = NULL) {
     }
   }
   return $path;
+}
+
+/**
+ * Remove the trailing DIRECTORY_SEPARATOR from a path.
+ * Will actually remove either / or \ on Windows.
+ */
+function drush_trim_path($path, $os = NULL) {
+  if (drush_is_windows($os)) {
+    return rtrim($path, '/\\');
+  }
+  else {
+    return rtrim($path, '/');
+  }
+}
+
+/**
+ * Makes sure the path has only path separators native for the current operating system
+ */
+function drush_normalize_path($path) {
+  if (drush_is_windows()) {
+    $path = str_replace('/', '\\',  strtolower($path));
+  }
+  else {
+    $path = str_replace('\\', '/', $path);
+  }
+  return drush_trim_path($path);
+}
+
+/**
+ * Calculates a single md5 hash for all files a directory (incuding subdirectories)
+ */
+function drush_dir_md5($dir) {
+  $flist = drush_scan_directory($dir, '/./', array('.', '..'), 0, TRUE, 'filename', 0, TRUE);
+  $hashes = array();
+  foreach ($flist as $f) {
+    $sum = array();
+    exec('cksum ' . escapeshellarg($f->filename), $sum);
+    $hashes[] = trim(str_replace(array($dir), array(''), $sum[0]));
+  }
+  sort($hashes);
+  return md5(implode("\n", $hashes));
 }
 
 /**
@@ -197,7 +236,7 @@ function drush_copy_dir($src, $dest, $overwrite = FILE_EXISTS_ABORT) {
     return drush_set_error('DRUSH_DESTINATION_NOT_WRITABLE', dt('Destination directory !dest is not writable.', array('!dest' => dirname($dest))));
   }
   // Try to do a recursive copy.
-  if (@_drush_recursive_copy($src, $dest)) {
+  if (@drush_op('_drush_recursive_copy', $src, $dest)) {
     return TRUE;
   }
 
@@ -235,7 +274,7 @@ function _drush_recursive_copy($src, $dest) {
   touch($dest, filemtime($src));
 
   // Preserve execute permission.
-  if (!is_link($src) && (!function_exists('drush_is_windows') || !drush_is_windows())) {
+  if (!is_link($src) && !drush_is_windows()) {
     // Get execute bits of $src.
     $execperms = fileperms($src) & 0111;
     // Apply execute permissions if any.
@@ -319,9 +358,6 @@ function drush_move_dir($src, $dest, $overwrite = FALSE) {
  * halted if the required directory cannot be created.
  */
 function drush_mkdir($path, $required = TRUE) {
-  if (empty($path)) {
-    return drush_set_error('DRUSH_MKDIR_NULL_PATH', dt('Path passed to drush_mkdir cannot be empty.'));
-  }
   if (!is_dir($path)) {
     if (drush_mkdir(dirname($path))) {
       if (@mkdir($path)) {
@@ -364,9 +400,7 @@ function drush_mkdir($path, $required = TRUE) {
 function drush_program_exists($program) {
   if (drush_has_bash()) {
     $bucket = drush_bit_bucket();
-    // Dont't use drush_op_system() since we don't want output during tests.
-    system("command -v $program > $bucket 2>&1", $result_code);
-    return $result_code === 0 ? TRUE : FALSE;
+    return drush_op_system("command -v $program >$bucket 2>&1") === 0 ? TRUE : FALSE;
   }
 }
 
@@ -442,7 +476,7 @@ function drush_find_tmp() {
 
     if (empty($temporary_directory)) {
       // If no directory has been found, create one in cwd.
-      $temporary_directory = Path::join(Drush::config()->get('env.cwd'), 'tmp');
+      $temporary_directory = Path::join(drush_cwd(), 'tmp');
       drush_mkdir($temporary_directory, TRUE);
       if (!is_dir($temporary_directory)) {
         return drush_set_error('DRUSH_UNABLE_TO_CREATE_TMP_DIR', dt("Unable to create a temporary directory."));
@@ -542,8 +576,8 @@ function drush_preflight_backup_dir($subdir = NULL) {
     // Try to use db name as subdir if none was provided.
     if (empty($subdir)) {
       $subdir = 'unknown';
-      if ($sql = SqlBase::create()) {
-        $db_spec = $sql->getDbSpec();
+      if ($sql = drush_sql_get_class()) {
+        $db_spec = $sql->db_spec();
         $subdir = $db_spec['database'];
       }
     }
@@ -551,7 +585,7 @@ function drush_preflight_backup_dir($subdir = NULL) {
     // Save the date to be used in the backup directory's path name.
     $date = gmdate('YmdHis', $_SERVER['REQUEST_TIME']);
 
-    $backup_dir = drush_get_option('backup-dir', Path::join(Drush::config()->get('env.home'), 'drush-backups'));
+    $backup_dir = drush_get_option('backup-dir', Path::join(drush_server_home(), 'drush-backups'));
     $backup_dir = Path::join($backup_dir, $subdir, $date);
     drush_set_context('DRUSH_BACKUP_DIR', $backup_dir);
   }

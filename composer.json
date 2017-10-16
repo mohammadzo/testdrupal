@@ -31,7 +31,7 @@
         "drupal/scheduler": "^1.0@RC",
         "drupal/simple_gmap": "^1.4",
         "drupal/views_slideshow": "^4.5",
-        "drush/drush": "9.*@dev",
+        "drush/drush": "8.1.15",
         "webflo/drupal-finder": "^1.0.0",
         "webmozart/path-util": "^2.3"
     },

@@ -38,7 +38,7 @@ class SqlConnectCase extends CommandUnishTestCase {
       $this->assertRegExp('/^psql -q --dbname=[^\s]+ --host=[^\s]+ --port=[^\s]+ --username=[^\s]+/', $connectionString);
     }
     else {
-      $this->markTestSkipped('sql-connect test does not recognize database type in ' . self::getDbUrl());
+      $this->markTestSkipped('sql-connect test does not recognize database type in ' . UNISH_DB_URL);
     }
 
     // Issue a query and check the result to verify the connection.
@@ -47,7 +47,7 @@ class SqlConnectCase extends CommandUnishTestCase {
     $this->assertContains('1', $output);
 
     // Run 'core-status' and insure that we can bootstrap Drupal.
-    $this->drush('core-status', array(), $options + ['fields' => 'bootstrap']);
+    $this->drush('core-status', array("Drupal bootstrap"), $options);
     $output = $this->getOutput();
     $this->assertContains('Successful', $output);
 
@@ -61,7 +61,7 @@ class SqlConnectCase extends CommandUnishTestCase {
 
     // We should still be able to run 'core-status' without getting an
     // error, although Drupal should not bootstrap any longer.
-    $this->drush('core-status', array(), $options + ['fields' => 'bootstrap']);
+    $this->drush('core-status', array("Drupal bootstrap"), $options);
     $output = $this->getOutput();
     $this->assertNotContains('Successful', $output);
   }

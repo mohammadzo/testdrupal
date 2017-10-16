@@ -1,7 +1,6 @@
 <?php
 
 namespace Unish;
-use Webmozart\PathUtil\Path;
 
 /**
  * @group commands
@@ -9,7 +8,17 @@ use Webmozart\PathUtil\Path;
 class QueueCase extends CommandUnishTestCase {
 
   function testQueue() {
-    $expected = 'aggregator_feeds,%items,"Drupal\Core\Queue\DatabaseQueue"';
+    if (UNISH_DRUPAL_MAJOR_VERSION == 6) {
+      $this->markTestSkipped("Queue API not available in Drupal 6.");
+    }
+
+    if (UNISH_DRUPAL_MAJOR_VERSION == 7) {
+      $expected = 'aggregator_feeds,%items,SystemQueue';
+    }
+    else {
+      $expected = 'aggregator_feeds,%items,Drupal\Core\Queue\DatabaseQueue';
+    }
+
     $sites = $this->setUpDrupal(1, TRUE);
     $options = array(
       'yes' => NULL,
@@ -24,52 +33,28 @@ class QueueCase extends CommandUnishTestCase {
     $output = $this->getOutput();
     $this->assertContains('aggregator_feeds', $output, 'Queue list shows the declared queue.');
 
-    // We need user to own to the feed.
-    $this->drush('user-create', array('example'), $options + ['password' => 'password', 'mail' => "example@example.com"]);
-    $this->drush('php-script', array('queue_script'), $options + array('script-path' => __DIR__ . '/resources'));
-    $this->drush('queue-list', array(), $options + array('format' => 'csv'));
-    $output = $this->getOutputAsList();
-    $this->assertEquals(str_replace('%items', 1, $expected), array_pop($output), 'Item was successfully added to the queue.');
+    $this->drush('php-script', array('queue_script-D' . UNISH_DRUPAL_MAJOR_VERSION), $options + array('script-path' => dirname(__FILE__) . '/resources'));
+    $this->drush('queue-list', array(), $options + array('pipe' => TRUE));
+    $output = trim($this->getOutput());
+    $parts = explode(",", $output);
+    $this->assertEquals(str_replace('%items', 1, $expected), $output, 'Item was successfully added to the queue.');
+    $output = $this->getOutput();
 
     $this->drush('queue-run', array('aggregator_feeds'), $options);
-    $this->drush('queue-list', array(), $options + array('format' => 'csv'));
-    $output = $this->getOutputAsList();
-    $this->assertEquals(str_replace('%items', 0, $expected), array_pop($output), 'Queue item processed.');
-  }
-
-  /**
-   * Tests the queue-delete command.
-   */
-  public function testQueueDelete() {
-    $expected = 'aggregator_feeds,%items,"Drupal\Core\Queue\DatabaseQueue"';
-
-    $sites = $this->setUpDrupal(1, TRUE);
-    $options = array(
-      'yes' => NULL,
-      'root' => $this->webroot(),
-      'uri' => key($sites),
-    );
-
-    // Enable aggregator since it declares a queue.
-    $this->drush('pm-enable', array('aggregator'), $options);
-
-    // Add another item to the queue and make sure it was deleted.
-    $this->drush('php-script', array('queue_script'), $options + array('script-path' => __DIR__ . '/resources'));
-    $this->drush('queue-list', array(), $options + array('format' => 'csv'));
-    $output = $this->getOutputAsList();
-    $this->assertEquals(str_replace('%items', 1, $expected), array_pop($output), 'Item was successfully added to the queue.');
-
-    $this->drush('queue-delete', array('aggregator_feeds'), $options);
-
-    $this->drush('queue-list', array(), $options + array('format' => 'csv'));
-    $output = $this->getOutputAsList();
-    $this->assertEquals(str_replace('%items', 0, $expected), array_pop($output), 'Queue was successfully deleted.');
+    $this->drush('queue-list', array(), $options + array('pipe' => TRUE));
+    $output = trim($this->getOutput());
+    $parts = explode(",", $output);
+    $this->assertEquals(str_replace('%items', 0, $expected), $output, 'Queue item processed.');
   }
 
   /**
    * Tests the RequeueException.
    */
   public function testRequeueException() {
+    if (UNISH_DRUPAL_MAJOR_VERSION < 8) {
+      $this->markTestSkipped("RequeueException only available in Drupal 8.");
+    }
+
     $sites = $this->setUpDrupal(1, TRUE);
     $options = array(
       'yes' => NULL,
@@ -85,13 +70,13 @@ class QueueCase extends CommandUnishTestCase {
     $this->drush('pm-enable', array('woot'), $options, NULL, NULL, self::EXIT_SUCCESS);
 
     // Add an item to the queue.
-    $this->drush('php-script', array('requeue_script'), $options + array('script-path' => __DIR__ . '/resources'));
+    $this->drush('php-script', array('requeue_script'), $options + array('script-path' => dirname(__FILE__) . '/resources'));
 
     // Check that the queue exists and it has one item in it.
-    $expected = 'woot_requeue_exception,%items,"Drupal\Core\Queue\DatabaseQueue"';
-    $this->drush('queue-list', array(), $options + array('format' => 'csv'));
-    $output = $this->getOutputAsList();
-    $this->assertEquals(str_replace('%items', 1, $expected), array_pop($output), 'Item was successfully added to the queue.');
+    $expected = 'woot_requeue_exception,%items,Drupal\Core\Queue\DatabaseQueue';
+    $this->drush('queue-list', array(), $options + array('pipe' => TRUE));
+    $output = trim($this->getOutput());
+    $this->assertEquals(str_replace('%items', 1, $expected), $output, 'Item was successfully added to the queue.');
 
     // Process the queue.
     $this->drush('queue-run', array('woot_requeue_exception'), $options);
@@ -107,9 +92,9 @@ class QueueCase extends CommandUnishTestCase {
     // RequeueException this time (see below).
     // 6. Drush removes the item from the queue.
     // 7. Command finishes. The queue is empty.
-    $this->drush('queue-list', array(), $options + array('format' => 'csv'));
-    $output = $this->getOutputAsList();
-    $this->assertEquals(str_replace('%items', 0, $expected), array_pop($output), 'Queue item processed after being requeued.');
+    $this->drush('queue-list', array(), $options + array('pipe' => TRUE));
+    $output = trim($this->getOutput());
+    $this->assertEquals(str_replace('%items', 0, $expected), $output, 'Queue item processed after being requeued.');
   }
 
   /**
@@ -119,13 +104,10 @@ class QueueCase extends CommandUnishTestCase {
    *   The path to the root directory of Drupal.
    */
   public function setupModulesForTests($root) {
-    $wootModule = Path::join(__DIR__ , 'resources/modules/d8/woot');
-    $this->assertTrue(file_exists($wootModule));
-    $targetDir = Path::join($root, 'modules/contrib/woot');
-    $this->mkdir($targetDir);
-    $this->recursive_copy($wootModule, $targetDir);
+    $wootModule = __DIR__ . '/resources/modules/d' . UNISH_DRUPAL_MAJOR_VERSION . '/woot';
+    $modulesDir = "$root/sites/all/modules";
+    $this->mkdir($modulesDir);
+    \symlink($wootModule, "$modulesDir/woot");
   }
-
-
 
 }

@@ -46,10 +46,6 @@ class ComposerStaticInit6106fb6bacfeb7c75af725b569d5f025
             'Webmozart\\PathUtil\\' => 19,
             'Webmozart\\Assert\\' => 17,
         ),
-        'U' => 
-        array (
-            'Unish\\' => 6,
-        ),
         'T' => 
         array (
             'Twig\\' => 5,
@@ -124,7 +120,6 @@ class ComposerStaticInit6106fb6bacfeb7c75af725b569d5f025
         ),
         'D' => 
         array (
-            'Drush\\' => 6,
             'Drupal\\Driver\\' => 14,
             'Drupal\\Core\\' => 12,
             'Drupal\\Console\\Dotenv\\' => 22,
@@ -200,10 +195,6 @@ class ComposerStaticInit6106fb6bacfeb7c75af725b569d5f025
         'Webmozart\\Assert\\' => 
         array (
             0 => __DIR__ . '/..' . '/webmozart/assert/src',
-        ),
-        'Unish\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/drush/drush/tests',
         ),
         'Twig\\' => 
         array (
@@ -397,10 +388,6 @@ class ComposerStaticInit6106fb6bacfeb7c75af725b569d5f025
         array (
             0 => __DIR__ . '/..' . '/fabpot/goutte/Goutte',
         ),
-        'Drush\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/drush/drush/src',
-        ),
         'Drupal\\Driver\\' => 
         array (
             0 => __DIR__ . '/../..' . '/docroot/drivers/lib/Drupal/Driver',
@@ -556,6 +543,10 @@ class ComposerStaticInit6106fb6bacfeb7c75af725b569d5f025
         ),
         'D' => 
         array (
+            'Drush' => 
+            array (
+                0 => __DIR__ . '/..' . '/drush/drush/lib',
+            ),
             'Doctrine\\Common\\Lexer\\' => 
             array (
                 0 => __DIR__ . '/..' . '/doctrine/lexer/lib',
@@ -583,6 +574,13 @@ class ComposerStaticInit6106fb6bacfeb7c75af725b569d5f025
             'Dflydev\\DotAccessConfiguration' => 
             array (
                 0 => __DIR__ . '/..' . '/dflydev/dot-access-configuration/src',
+            ),
+        ),
+        'C' => 
+        array (
+            'Consolidation' => 
+            array (
+                0 => __DIR__ . '/..' . '/drush/drush/lib',
             ),
         ),
     );
