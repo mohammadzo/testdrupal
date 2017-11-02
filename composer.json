@@ -31,6 +31,7 @@
         "drupal/reCAPTCHA": "^2.2",
         "drupal/scheduler": "^1.0@RC",
         "drupal/simple_gmap": "^1.4",
+        "drupal/stage_file_proxy": "^1.0@alpha",
         "drupal/views_slideshow": "^4.5",
         "drush/drush": "8.1.15",
         "webflo/drupal-finder": "^1.0.0",
