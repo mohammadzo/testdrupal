@@ -1,0 +1,9 @@
+composer_manager.packages_page:
+  route_name: composer_manager.packages_page
+  title: Packages
+  weight: -10
+  base_route: composer_manager.packages_page
+composer_manager.settings_form:
+  route_name: composer_manager.settings_form
+  title: Settings
+  base_route: composer_manager.packages_page

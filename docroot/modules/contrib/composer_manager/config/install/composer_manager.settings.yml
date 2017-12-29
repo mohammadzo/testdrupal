@@ -1,0 +1,4 @@
+composer_manager_autobuild_file: 1
+composer_manager_vendor_dir: sites/all/vendor
+composer_manager_generate_file: 1
+composer_manager_autobuild_packages: 1
