@@ -1,6 +1,4 @@
 services:
-  boot_subscriber:
-    class: Drupal\composer_manager\EventSubscriber\BootSubscriber
-    tags:
-      -
-        name: event_subscriber
+  composer_manager.package_manager:
+    class: Drupal\composer_manager\PackageManager
+    arguments: ['@app.root']
